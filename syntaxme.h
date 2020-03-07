@@ -1,0 +1,16 @@
+#define object
+#define model
+#define protocol
+#define singleton
+#define definition(stuff)
+#define instance(stuff)
+#define accessor(stuff)
+#define getter(stuff)
+#define setter(stuff)
+#define constructor(stuff)
+#define destructor(stuff)
+#define implements
+#define Controller(stuff)
+#define Data(stuff)
+#define Methods(stuff)
+#define ThreadSafe(stuff)
