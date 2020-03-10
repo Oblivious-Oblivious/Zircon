@@ -1,30 +1,31 @@
 #include "syntaxme.h"
 
 object Controller(int aValue, int bValue, {
-    implements model Data;
-    implements protocol Methods;
+    implements model Data data1;
     
+    implements protocol Methods;
+
     constructor({
-        Data <- a = aValue;
-        Data <- b = bValue;
+        data1 <- a = aValue;
+        data1 <- b = bValue;
     });
 
-    "add" -> return Data -> a + Data -> b;
-    "sub" -> return Data -> a - Data -> b;
-    "mul" -> return Data -> a * Data -> b;
-    "div" -> return Data -> a / Data -> b;
+    "add" -> return data1 -> a + data1 -> b;
+    "sub" -> return data1 -> a - data1 -> b;
+    "mul" -> return data1 -> a * data1 -> b;
+    "div" -> return data1 -> a / data1 -> b;
     
     destructor();
 });
 
-singleton ThreadSafe(int a, int b, {
+singleton ThreadSafe(int aSingleValue, int bSingleValue, {
     accessor({
-        instance(a);
-        instance(b);
+        instance(aSingleValue);
+        instance(bSingleValue);
     });
 
     "add" -> {
-        return this.a + this.b;
+        return this.aSingleValue + this.bSingleValue;
     }
 });
 

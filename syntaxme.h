@@ -14,3 +14,5 @@
 #define Data(stuff)
 #define Methods(stuff)
 #define ThreadSafe(stuff)
+#define data1
+#define this
