@@ -1,12 +1,12 @@
 #include "syntaxme.h"
 
-object Controller(int a, int b, {
+object Controller(int aValue, int bValue, {
     implements model Data;
     implements protocol Methods;
     
     constructor({
-        Data <- a = a;
-        Data <- b = b;
+        Data <- a = aValue;
+        Data <- b = bValue;
     });
 
     "add" -> return Data -> a + Data -> b;
