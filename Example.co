@@ -1,9 +1,9 @@
 #include "syntaxme.h"
 
-object Controller(int aValue, int bValue, {
+object NamedController(int aValue, int bValue, {
     implements model Data data1;
     
-    implements protocol Methods;
+    implements protocol Messages;
 
     constructor({
         data1 <- a = aValue;
@@ -36,7 +36,7 @@ model Data({
     });
 });
 
-protocol Methods({
+protocol Messages({
     "add";
     "sub";
     "mul";
