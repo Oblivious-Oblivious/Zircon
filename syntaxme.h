@@ -10,9 +10,9 @@
 #define constructor(stuff)
 #define destructor(stuff)
 #define implements
-#define Controller(stuff)
+#define NamedController(stuff)
 #define Data(stuff)
-#define Methods(stuff)
+#define Messages(stuff)
 #define ThreadSafe(stuff)
 #define data1
 #define this

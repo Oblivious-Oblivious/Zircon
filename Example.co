@@ -6,14 +6,14 @@ object NamedController(int aValue, int bValue, {
     implements protocol Messages;
 
     constructor({
-        data1 <- a = aValue;
-        data1 <- b = bValue;
+        data1<-a = aValue;
+        data1<-b = bValue;
     });
 
-    "add" -> return data1 -> a + data1 -> b;
-    "sub" -> return data1 -> a - data1 -> b;
-    "mul" -> return data1 -> a * data1 -> b;
-    "div" -> return data1 -> a / data1 -> b;
+    "add" -> return data1->a + data1->b;
+    "sub" -> return data1->a - data1->b;
+    "mul" -> return data1->a * data1->b;
+    "div" -> return data1->a / data1->b;
     
     destructor();
 });
@@ -37,8 +37,8 @@ model Data({
 });
 
 protocol Messages({
-    "add";
-    "sub";
-    "mul";
-    "div";
+    int "add" void;
+    int "sub" void;
+    int "mul" void;
+    int "div" void;
 });
