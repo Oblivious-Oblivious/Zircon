@@ -1,2 +1,2 @@
 # cObject
- Small parser for object creation in c
+ Small parser for object creation in C.
