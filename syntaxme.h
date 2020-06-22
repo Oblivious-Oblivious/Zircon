@@ -7,12 +7,13 @@
 #define accessor(stuff)
 #define getter(stuff)
 #define setter(stuff)
-#define constructor(stuff)
-#define destructor(stuff)
+#define initialize(stuff)
+#define defer(stuff)
 #define implements
 #define NamedController(stuff)
 #define Data(stuff)
 #define Messages(stuff)
 #define ThreadSafe(stuff)
 #define data1
-#define this
+#define self
+struct NamedController{};
