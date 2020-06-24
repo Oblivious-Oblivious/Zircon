@@ -1,0 +1,73 @@
+#include "syntaxme.h"
+#include <stdio.h>
+
+object NamedController(int aValue, int bValue, {
+    /* Compose models */
+    implements model Data data1;
+
+    /* Inherit behaviour */
+    implements protocol Messages;
+
+    /* EQUIV */
+    /*
+        (NamedController*) self |> "new" |> {
+            struct NamedController _obj = malloc(sizeof(NamedController*) + 1);
+            ...
+            ...
+            return _obj;
+        }
+    */
+    initialize({
+        data1 "set" a, aValue;
+        data1 "set" b, bValue;
+    });
+
+    (void) self |> "add" |> {
+        return data1 "get" a + data1 "get" b;
+    }
+    (void) self |> "sub" |> {
+        return data1 "get" a - data1 "get" b;
+    }
+    (void) self |> "mul" |> {
+        return data1 "get" a * data1 "get" b;
+    }
+    (void) self |> "div" |> {
+        return data1 "get" a / data1 "get" b;
+    }
+    
+    defer({});
+});
+
+/* EQUIV */
+/*
+    (int) self |> "get" |> (int): a |> return self->a;
+    (void) self |> "set" |> (int): a, (int): aValue |> self->a = aValue;
+    
+    (int) self |> "get" |> (int): b |> return self->b;
+    (void) self |> "set" |> (int): b, (int): bValue |> self->b = bValue;
+*/
+model Data({
+    accessor({
+        int a;
+        int b;
+    });
+});
+
+protocol Messages({
+    (void) self |> "add" |> int;
+    (void) self |> "sub" |> int;
+    (void) self |> "mul" |> int;
+    (void) self |> "div" |> int;
+});
+
+int main(void) {
+    NamedController obj = NamedController(2, 2) "new";
+    printf("%d\n", obj "add"); /* `4` */
+
+    obj "set" a, 5;
+    obj "set" b, 3;
+    int res = obj "add";
+    printf("%d\n", res); /* `8` */
+
+    return 0;
+}

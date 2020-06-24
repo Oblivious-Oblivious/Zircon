@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #define object
 #define model
 #define protocol
@@ -17,3 +19,6 @@
 #define data1
 #define self
 struct NamedController{};
+#define Point(stuff)
+#define nil
+#define format

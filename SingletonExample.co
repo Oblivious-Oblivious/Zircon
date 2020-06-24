@@ -1,0 +1,12 @@
+#include "syntaxme.h"
+
+singleton ThreadSafe(int aSingleValue, int bSingleValue, {
+    accessor({
+        int aSingleValue;
+        int bSingleValue;
+    });
+
+    (void) self |> "add" |> {
+        return self->aSingleValue + self->bSingleValue;
+    }
+});
