@@ -14,7 +14,7 @@ object NamedController(int aValue, int bValue, {
             struct NamedController _obj = malloc(sizeof(NamedController*) + 1);
             ...
             ...
-            return _obj;
+            _obj;
         }
     */
     initialize({
@@ -23,16 +23,16 @@ object NamedController(int aValue, int bValue, {
     });
 
     (void) self |> "add" |> {
-        return data1 "get" a + data1 "get" b;
+        data1 "get" a + data1 "get" b;
     }
     (void) self |> "sub" |> {
-        return data1 "get" a - data1 "get" b;
+        data1 "get" a - data1 "get" b;
     }
     (void) self |> "mul" |> {
-        return data1 "get" a * data1 "get" b;
+        data1 "get" a * data1 "get" b;
     }
     (void) self |> "div" |> {
-        return data1 "get" a / data1 "get" b;
+        data1 "get" a / data1 "get" b;
     }
     
     defer({});

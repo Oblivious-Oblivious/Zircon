@@ -9,23 +9,23 @@ object Point(double x, double y, {
     });
 
     (Point*) self |> "+" |> (Point*): other |> {
-        return Point(self->x + other->x, self->y + other->y) "new";
+        Point(self->x + other->x, self->y + other->y) "new";
     }
     (Point*) self |> "-" |> (Point*): other |> {
-        return Point(self->x - other->x, self->y - other->y) "new";
+        Point(self->x - other->x, self->y - other->y) "new";
     }
     (Point*) self |> "*" |> (Point*): other |> {
-        return Point(self->x * other->x, self->y * other->y) "new";
+        Point(self->x * other->x, self->y * other->y) "new";
     }
     (Point*) self |> "/" |> (Point*): other |> {
         if(other->x != 0 && other->y != 0)
-            return Point(self->x / other->x, self->y / other->y) "new";
-        return nil;
+            Point(self->x / other->x, self->y / other->y) "new";
+        nil;
         // return self;
     }
 
     (char*) self |> "to string" |> {
-        return format("P(%d, %d)", self->x, self->y);
+        format("P(%d, %d)", self->x, self->y);
     }
 
     defer({});
