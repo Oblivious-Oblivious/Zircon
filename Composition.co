@@ -3,10 +3,10 @@
 
 object NamedController(int aValue, int bValue, {
     /* Compose models */
-    implements model Data data1;
+    Data data1 "new";
 
     /* Inherit behaviour */
-    implements protocol Messages;
+    implements Messages;
 
     /* EQUIV */
     /*
@@ -22,16 +22,20 @@ object NamedController(int aValue, int bValue, {
         data1 "set" b, bValue;
     });
 
-    (void) self |> "add" |> {
+    // (int) self |> "add" |> {
+    "add" |> {
         data1 "get" a + data1 "get" b;
     }
-    (void) self |> "sub" |> {
+    // (int) self |> "sub" |> {
+    "sub" |> {
         data1 "get" a - data1 "get" b;
     }
-    (void) self |> "mul" |> {
+    // (int) self |> "mul" |> {
+    "mul" |> {
         data1 "get" a * data1 "get" b;
     }
-    (void) self |> "div" |> {
+    // (int) self |> "div" |> {
+    "div" |> {
         data1 "get" a / data1 "get" b;
     }
     
@@ -54,10 +58,10 @@ model Data({
 });
 
 protocol Messages({
-    (void) self |> "add" |> int;
-    (void) self |> "sub" |> int;
-    (void) self |> "mul" |> int;
-    (void) self |> "div" |> int;
+    (int) self |> "add";
+    (int) self |> "sub";
+    (int) self |> "mul";
+    (int) self |> "div";
 });
 
 int main(void) {

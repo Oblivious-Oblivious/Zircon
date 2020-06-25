@@ -6,7 +6,7 @@ singleton ThreadSafe(int aSingleValue, int bSingleValue, {
         int bSingleValue;
     });
 
-    (void) self |> "add" |> {
+    (int) self |> "add" |> {
         self->aSingleValue + self->bSingleValue;
     }
 });
