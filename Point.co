@@ -19,9 +19,9 @@ object Point(double x, double y, {
     }
     (Point*) self |> "/" |> (Point*): other |> {
         if(other->x != 0 && other->y != 0)
-            Point(self->x / other->x, self->y / other->y) "new";
+            return Point(self->x / other->x, self->y / other->y) "new";
         nil;
-        // return self;
+        // self;
     }
 
     (char*) self |> "to string" |> {
