@@ -1,0 +1,42 @@
+#include "syntaxme.h"
+
+model PointFields({
+    double x;
+    double y;
+});
+
+object Point implements Object(double x, double y, {
+    fields({
+        char *name;
+        PointFields *coords;
+    });
+
+    initialize({
+        self->name = "default";
+        self->coords = PointFields "new" x, y;
+    });
+
+    (Point*) self |> "+" |> (Point*): other |> {
+        return Point "new" self->coords->x + other->coords->x, self->coords->y + other->coords->y;
+    }
+    (Point*) self |> "-" |> (Point*): other |> {
+        return Point "new" self->coords->x - other->coords->x, self->coords->y - other->coords->y;
+    }
+    (Point*) self |> "*" |> (Point*): other |> {
+        return Point "new" self->coords->x * other->coords->x, self->coords->y * other->coords->y;
+    }
+    (Point*) self |> "/" |> (Point*): other |> {
+        if(other->coords->x != 0 && other->coords->y != 0)
+            return Point "new" self->coords->x / other->coords->x, self->coords->y / other->coords->y;
+        return NULL;
+        // return self;
+    }
+
+    (char*) self |> "to string" |> {
+        return format("P(%g, %g)", self->coords->x, self->coords->y);
+    }
+
+    defer({
+        free(self->coords);
+    });
+});

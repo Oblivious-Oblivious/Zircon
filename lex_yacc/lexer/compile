@@ -1,8 +1,0 @@
-#!/bin/sh
-
-rm a.out
-lex ${1%%.*}.l
-gcc $1 lex.yy.c
-rm lex.yy.c
-echo "Running parse file..."
-./a.out

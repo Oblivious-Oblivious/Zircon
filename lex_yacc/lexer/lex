@@ -1,8 +1,0 @@
-#!/bin/sh
-
-lex $1
-gcc lex.yy.c -ll
-rm lex.yy.c
-echo "Running lex file.."
-./a.out
-rm a.out

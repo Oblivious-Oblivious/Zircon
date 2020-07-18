@@ -1,4 +1,0 @@
-#!/bin/sh
-
-apt-get install bison -y
-apt-get install flex -y

@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.6.3.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -31,11 +31,12 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_Y_TAB_H_INCLUDED
-# define YY_YY_Y_TAB_H_INCLUDED
+#ifndef YY_YY_GRAMMAR_TAB_H_INCLUDED
+# define YY_YY_GRAMMAR_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -44,36 +45,38 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    print = 258,
-    exit_command = 259,
-    number = 260,
-    identifier = 261
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    OBJECT = 258,                  /* OBJECT  */
+    MODEL = 259,                   /* MODEL  */
+    PROTOCOL = 260,                /* PROTOCOL  */
+    SELF = 261,                    /* SELF  */
+    LEFT_PAREN = 262,              /* LEFT_PAREN  */
+    RIGHT_PAREN = 263,             /* RIGHT_PAREN  */
+    LEFT_CURLY = 264,              /* LEFT_CURLY  */
+    RIGHT_CURLY = 265,             /* RIGHT_CURLY  */
+    COLON = 266,                   /* COLON  */
+    SEMICOLON = 267,               /* SEMICOLON  */
+    SEND = 268,                    /* SEND  */
+    ACCESS = 269,                  /* ACCESS  */
+    POINTER = 270,                 /* POINTER  */
+    STRING_LITERAL = 271,          /* STRING_LITERAL  */
+    IDENT = 272,                   /* IDENT  */
+    EOLN = 273                     /* EOLN  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
-#define print 258
-#define exit_command 259
-#define number 260
-#define identifier 261
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
-{
-#line 11 "calc.y"
-
-    int num;
-    char id;
-
-#line 74 "y.tab.h"
-
-};
-typedef union YYSTYPE YYSTYPE;
+typedef int YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
@@ -83,4 +86,4 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_Y_TAB_H_INCLUDED  */
+#endif /* !YY_YY_GRAMMAR_TAB_H_INCLUDED  */

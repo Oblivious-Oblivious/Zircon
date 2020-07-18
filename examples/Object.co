@@ -1,0 +1,33 @@
+#include "syntaxme.h"
+
+object Object({
+    fields({
+        unsigned long id;
+        char *class;
+    });
+
+    initialize({
+        _generate_id();
+        _generate_class_name();
+    });
+
+    (bool) self |> "==" |> (Object*): other |> {
+        return self->id == other->id;
+    }
+
+    (bool) self |> "!=" |> (Object*): other |> {
+        return self->id != other->id;
+    }
+    
+    (unsigned long long) self |> "id" |> {
+        return self->id;
+    }
+
+    (bool) self |> "equal" (Object*): other |> {
+        return self "==" other;
+    }
+
+    (char*) self |> "to string" |> {
+        return self->class;
+    }
+});

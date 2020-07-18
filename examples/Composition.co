@@ -1,0 +1,66 @@
+#include "syntaxme.h"
+#include <stdio.h>
+
+model Data({
+    int a;
+    int b;
+});
+
+protocol Messages({
+    (int) self |> "add";
+    (int) self |> "sub";
+    (int) self |> "mul";
+    (int) self |> "div";
+});
+
+/* Inherit behaviour */
+object Controller implements Messages(int aValue, int bValue, {
+    fields({
+        /* Compose models */
+        Data *data1;
+    });
+
+    initialize({
+        self->data1 = Data "new";
+        self->data1->a = aValue;
+        self->data1->b = bValue;
+    });
+
+    (void) self |> "set a" |> (int): a |> {
+        self->data1->a = a;
+    }
+    (void) self |> "set b" |> (int): b |> {
+        self->data1->b = b;
+    }
+
+    method "add" |> {
+        return data1->a + data1->b;
+    }
+    method "sub" |> {
+        return data1->a - data1->b;
+    }
+    method "mul" |> {
+        return data1->a * data1->b;
+    }
+    method "div" |> {
+        if(data1->b != 0)
+            return data1->a / data1->b;
+        return -1;
+    }
+    
+    defer({});
+});
+
+int main(void) {
+    Controller *obj = Controller "new" 2, 2;
+    printf("%d\n", obj "add"); /* `4` */
+
+    /* ANTIPATTERN */
+    obj "set a" = 5;
+    obj "set b" = 3;
+
+    int res = obj "add";
+    printf("%d\n", res); /* `8` */
+
+    return 0;
+}
