@@ -1,0 +1,11 @@
+object Any implements Object({
+    fields({
+        int x;
+        int y;
+        char *name;
+    });
+
+    message |> "differ" {
+        return 0;
+    }
+});
