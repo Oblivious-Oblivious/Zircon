@@ -1,24 +1,33 @@
-YFLAGS = -d
-OBJFLAGS = -O3
-CCFLAGS = -lfl -O3
-PROGRAM = transpiler
-LEXER = tokens
-PARSER = grammar
 CC = gcc
+OPT = -O2 -march=native
+VERSION = -std=c89
+OUTPUT = a.out
 
-HEADERS = $(PARSER).tab.h
-OBJS = $(PARSER).tab.o lex.yy.o
-SRCS = $(PARSER).tab.c lex.yy.c
+FLAGS =
+WARNINGS =
+YACC_WARNINGS =
+HEADERS =
+LIBS =
 
-all: $(PROGRAM)
+LEX = lexer.l
+LEX_OUT = lex.yy.c
+YACC = parser.y
+YACC_OUT = parser.tab
+COMPILE = $(YACC_OUT).c $(LEX_OUT) string.c vector.c hashmap.c
 
-.c.o: $(SRCS)
-	$(CC) -c $*.c -o $@ $(OBJFLAGS)
-grammar.tab.c: $(PARSER).y
-	bison $(YFLAGS) $(PARSER).y
-lex.yy.c: $(LEXER).l
-	flex $(LEXER).l
-$(PROGRAM): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(CCFLAGS)
+all: compiler
+
+flex:
+	flex $(LEX)
+
+bison:
+	bison -d $(YACC_WARNINGS) $(YACC)
+
+compiler: flex bison
+	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
+	./a.out testcases/test5.c
+	gcc out.c -o out
+	./out
+
 clean:
-	rm -r $(OBJS) $(SRCS) $(HEADERS) $(PROGRAM)
+	rm -f $(OUTPUT) $(LEX_OUT) $(YACC_OUT).c $(YACC_OUT).h out.c out

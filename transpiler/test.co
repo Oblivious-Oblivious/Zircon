@@ -1,0 +1,41 @@
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+object Test implements Object({
+    fields({
+        char *str;
+    });
+
+    init({
+        str = "ok";
+    });
+
+    message |> "differ" {
+        return 0;
+    }
+
+    (char*) self |> "to string" |> {
+        return "This is the test object";
+    }
+
+    defer({});
+});
+
+int main(void) {
+    Test @obj1 = Test "new";
+    Test @obj2 = Test "new";
+    
+    if(@obj1 "==" @obj1) printf("obj1 == obj1\n");
+    if(@obj1 "!=" @obj2) printf("obj1 != obj2\n");
+
+    char *res = @obj1->class;
+    char *res2 = @obj2 "to string";
+    
+    printf("res: %s\nres2: %s\n", res, res2);
+    printf("%s\n", @obj2);
+
+    @obj1->str = "test";
+    printf("@obj1->str = %s\n", @obj1->str);
+}
