@@ -1,12 +1,14 @@
 #include "syntaxme.h"
 #include <stdio.h>
 
-model Data({
-    int a;
-    int b;
+object Composition_Model({
+    fields({
+        int a;
+        int b;
+    });
 });
 
-protocol Messages({
+protocol Composition_Protocol implements Object({
     (int) self |> "add";
     (int) self |> "sub";
     (int) self |> "mul";
@@ -14,13 +16,13 @@ protocol Messages({
 });
 
 /* Inherit behaviour */
-object Controller implements Messages(int aValue, int bValue, {
+object Composition implements Composition_Protocol(int aValue, int bValue, {
     fields({
-        /* Compose models */
-        Data *data1;
+        /* Compose objects */
+        Data @data1;
     });
 
-    initialize({
+    init({
         self->data1 = Data "new";
         self->data1->a = aValue;
         self->data1->b = bValue;
@@ -33,16 +35,16 @@ object Controller implements Messages(int aValue, int bValue, {
         self->data1->b = b;
     }
 
-    method "add" |> {
+    message "add" |> {
         return data1->a + data1->b;
     }
-    method "sub" |> {
+    message "sub" |> {
         return data1->a - data1->b;
     }
-    method "mul" |> {
+    message "mul" |> {
         return data1->a * data1->b;
     }
-    method "div" |> {
+    message "div" |> {
         if(data1->b != 0)
             return data1->a / data1->b;
         return -1;
@@ -52,14 +54,14 @@ object Controller implements Messages(int aValue, int bValue, {
 });
 
 int main(void) {
-    Controller *obj = Controller "new" 2, 2;
-    printf("%d\n", obj "add"); /* `4` */
+    Composition @obj = Composition "new" 2, 2;
+    printf("%d\n", @obj "add"); /* `4` */
 
     /* ANTIPATTERN */
-    obj "set a" = 5;
-    obj "set b" = 3;
+    @obj "set a" = 5;
+    @obj "set b" = 3;
 
-    int res = obj "add";
+    int res = @obj "add";
     printf("%d\n", res); /* `8` */
 
     return 0;

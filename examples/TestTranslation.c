@@ -98,5 +98,5 @@ int main(void) {
 
     /* Print str */
     obj1->str = "test";
-    printf("obj1->str = %s\n", obj1->str);
+    printf("@obj1->str = %s\n", obj1->str);
 }

@@ -7,7 +7,7 @@ object Test implements Object({
         char *str;
     });
 
-    initialize({
+    init({
         str = "ok";
     });
 
@@ -15,21 +15,21 @@ object Test implements Object({
 });
 
 int main(void) {
-    Test obj1 = Test "new";
-    Test obj2 = Test "new";
+    Test @obj1 = Test "new";
+    Test @obj2 = Test "new";
     
-    if(obj1 "==" obj1) printf("obj1 == obj1\n");
-    if(obj1 "!=" obj2) printf("obj1 != obj2\n");
+    if(@obj1 "==" @obj1) printf("obj1 == obj1\n");
+    if(@obj1 "!=" @obj2) printf("obj1 != obj2\n");
 
-    char *res = obj1->class;
-    char *res2 = obj2 "to string";
+    char *res = @obj1->class;
+    char *res2 = @obj2 "to string";
     
     /* res: Test, res2: Test */
     printf("res: %s\nres2: %s\n", res, res2);
     /* Test */
-    printf("%s\n", obj2);
+    printf("%s\n", @obj2);
 
     /* Print str */
-    obj1->str = "test";
-    printf("obj1->str = %s\n", obj1->str);
+    @obj1->str = "test";
+    printf("@obj1->str = %s\n", @obj1->str);
 }
