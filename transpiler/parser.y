@@ -61,8 +61,10 @@ hashmap *enum_constants;
 %type<String> block_item_list block_item expression_statement selection_statement iteration_statement jump_statement translation_unit
 %type<String> external_declaration function_definition declaration_list
 
-%type<String> preprocessor_directive preprocessor_control_line preprocessor_constant_expression preprocessor_conditional preprocessor_else_line
-%type<String> preprocessor_if_part preprocessor_elif_parts preprocessor_else_part preprocessor_endif_line preprocessor_if_line preprocessor_elif_line
+%type<String> object_specifier
+
+%type<String> preprocessor_directive preprocessor_control_line preprocessor_constant_expression preprocessor_conditional
+%type<String> preprocessor_if_part preprocessor_elif_parts preprocessor_else_part preprocessor_if_line preprocessor_elif_line preprocessor_else_line
 
 %start translation_unit
 %%
@@ -645,9 +647,16 @@ type_specifier:
     | enum_specifier {
         $$ = string_dup($1);
     }
+    | object_specifier {
+        $$ = string_dup($1);
+    }
     | TYPEDEF_NAME { /* after defined as a typedef_name */
         $$ = string_dup($1);
     }
+    ;
+
+object_specifier:
+      object_keyword {}
     ;
 
 struct_or_union_specifier:
@@ -1469,13 +1478,13 @@ declaration_list:
     ;
 
 preprocessor_directive:
-      preprocessor_control_line {
+      preprocessor_conditional {
+        $$ = string_dup($1);
+    }
+    | preprocessor_control_line {
         $$ = string_dup($1);
     }
     | preprocessor_constant_expression {
-        $$ = string_dup($1);
-    }
-    | preprocessor_conditional {
         $$ = string_dup($1);
     }
     ;
@@ -1492,7 +1501,6 @@ preprocessor_control_line:
         $$ = new_string("\n#define ");
         string_add_str($$, string_get($2));
         string_add_char($$, ' ');
-        printf("DEFINE IDENTIFIER: $2 is %s\n", string_get($2));
     }
     | DEFINE IDENTIFIER declaration_list STRING {
         $$ = new_string("\n#define ");
@@ -1513,11 +1521,12 @@ preprocessor_control_line:
     | INCLUDE '<' HEADER '>' {
         $$ = new_string("\n#include <");
         string_add_str($$, string_get($3));
-        string_add_str($$, ">");
+        string_add_str($$, ">\n");
     }
     | INCLUDE STRING {
         $$ = new_string("\n#include ");
         string_add_str($$, string_get($2));
+        string_add_char($$, '\n');
         /* Newline is added on the string */
     }
     | LINE INT_CONSTANT {
@@ -1566,23 +1575,20 @@ preprocessor_constant_expression:
     ;
 
 preprocessor_conditional:
-      preprocessor_if_part preprocessor_endif_line {
+      preprocessor_if_part ENDIF {
         $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_char($$, '\n');
+        string_add_str($$, "\n#endif\n");
     }
-    | preprocessor_if_part preprocessor_elif_parts preprocessor_else_part preprocessor_endif_line {
+    | preprocessor_if_part preprocessor_elif_parts preprocessor_else_part ENDIF {
         $$ = string_dup($1);
         string_add_str($$, string_get($2));
         string_add_str($$, string_get($3));
-        string_add_str($$, string_get($4));
-        string_add_char($$, '\n');
+        string_add_str($$, "\n#endif\n");
     }
-    | preprocessor_if_part preprocessor_else_part preprocessor_endif_line {
+    | preprocessor_if_part preprocessor_else_part ENDIF {
         $$ = string_dup($1);
         string_add_str($$, string_get($2));
-        string_add_str($$, string_get($3));
-        string_add_char($$, '\n');
+        string_add_str($$, "\n#endif\n");
     }
     ;
 
@@ -1619,14 +1625,8 @@ preprocessor_else_line:
     }
     ;
 
-preprocessor_endif_line:
-      ENDIF {
-        $$ = new_string("\n#endif");
-    }
-    ;
-
 preprocessor_if_part:
-      preprocessor_if_line expression {
+      preprocessor_if_line translation_unit {
         $$ = string_dup($1);
         string_add_str($$, string_get($2));
         string_add_char($$, '\n');
@@ -1634,12 +1634,12 @@ preprocessor_if_part:
     ;
 
 preprocessor_elif_parts:
-      preprocessor_elif_line expression {
+      preprocessor_elif_line translation_unit {
         $$ = string_dup($1);
         string_add_str($$, string_get($2));
         string_add_char($$, '\n');
     }
-    | preprocessor_elif_parts preprocessor_elif_line expression {
+    | preprocessor_elif_parts preprocessor_elif_line translation_unit {
         $$ = string_dup($1);
         string_add_str($$, string_get($2));
         string_add_str($$, string_get($3));
@@ -1648,7 +1648,7 @@ preprocessor_elif_parts:
     ;
 
 preprocessor_else_part:
-      preprocessor_else_line expression {
+      preprocessor_else_line translation_unit {
         $$ = string_dup($1);
         string_add_str($$, string_get($2));
         string_add_char($$, '\n');
