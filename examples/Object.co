@@ -1,9 +1,9 @@
 #include "syntaxme.h"
 
-object Object implements Object_Model({
-    fields({
+object Object implements Object_Model {
+    fields {
         implements Object_Data;
-    });
+    }
 
     /* Alias for new */
     /* init({}); */
@@ -80,8 +80,8 @@ object Object implements Object_Model({
         return __ret_value;
     }
 
-    defer({
+    defer {
         free(self->class);
-        defer()
-    });
-});
+        defer();
+    }
+}

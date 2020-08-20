@@ -1,21 +1,21 @@
 #include "syntaxme.h"
 
-model Point_Protocol({
+model Point_Protocol {
     double x;
     double y;
-});
+}
 
-object Point implements Object(double x, double y, {
-    fields({
+object Point implements Object(double x, double y) {
+    fields {
         char *name;
         implements Point_Protocol;
-    });
+    }
 
-    init({
+    init {
         self->name = "default";
         self->x = x;
         self->y = y;
-    });
+    }
 
     (Point@) self |> "+" |> (Point@): other |> {
         return Point "new" self->x + other->x, self->y + other->y;
@@ -37,7 +37,7 @@ object Point implements Object(double x, double y, {
         return format("P(%g, %g)", self->x, self->y);
     }
 
-    defer({
+    defer {
         free(self->name);
-    });
-});
+    }
+}

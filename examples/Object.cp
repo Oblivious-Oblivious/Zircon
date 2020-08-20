@@ -1,6 +1,6 @@
 #include "syntaxme.h"
 
-protocol Object_Messages({
+protocol Object_Messages {
     (unsigned long) self |> "id";
     (Object@) self |> "class";
     (Object@) self |> "superclass";
@@ -21,4 +21,4 @@ protocol Object_Messages({
     (bool) self |> "!=" |> (Object@): other;
     (bool) self |> "equal" |> (Object@): other;
     (char*) self |> "to string";
-});
+}

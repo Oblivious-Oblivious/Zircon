@@ -2,17 +2,17 @@
 #include <stdio.h>
 
 /* All objects implement the (Object) class */
-object Test implements Object({
-    fields({
+object Test implements Object {
+    fields {
         char *str;
-    });
+    }
 
-    init({
+    init {
         str = "ok";
-    });
+    }
 
-    defer({});
-});
+    defer {}
+}
 
 int main(void) {
     Test @obj1 = Test "new";
