@@ -18,6 +18,7 @@ string *translation;
 /* Hashmaps containing special identifiers */
 hashmap *typedef_names;
 hashmap *enum_constants;
+hashmap *objects;
 
 %}
 
@@ -25,7 +26,7 @@ hashmap *enum_constants;
     string *String;
 }
 
-%token OBJECT MODEL PROTOCOL INIT DEFER FIELDS IMPLEMENTS SELF SUPER MESSAGE SUPERMESSAGE
+%token OBJECT MODEL PROTOCOL INIT DEFER FIELDS IMPLEMENTS MESSAGE
 
 %token AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN FLOAT FOR GOTO IF INT LONG REGISTER RETURN SHORT SIGNED SIZEOF STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE
 %token BOOL COMPLEX IMAGINARY INLINE RESTRICT
@@ -61,7 +62,9 @@ hashmap *enum_constants;
 %type<String> block_item_list block_item expression_statement selection_statement iteration_statement jump_statement translation_unit
 %type<String> external_declaration function_definition declaration_list
 
-%type<String> object_specifier
+%type<String> model protocol object object_specifier object_declaration_list message_declaration_list fields_declaration
+%type<String> constructor_declaration destructor_declaration object_declaration self_or_super message_declaration abstract_message_declaration
+%type<String> abstract_message_declaration_list declaration_specifiers_or_pointer
 
 %type<String> preprocessor_directive preprocessor_control_line preprocessor_constant_expression preprocessor_conditional
 %type<String> preprocessor_if_part preprocessor_elif_parts preprocessor_else_part preprocessor_if_line preprocessor_elif_line preprocessor_else_line
@@ -171,6 +174,29 @@ postfix_expression:
         string_add_char($$, '(');
         string_add_str($$, string_get($3));
         string_add_char($$, ')');
+    }
+    | postfix_expression STRING argument_expression_list {
+        /* TODO -> ADDED HERE */
+        $$ = string_dup($1);
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($2));
+        string_add_str($$, string_get($3));
+    }
+    | postfix_expression STRING {
+        $$ = string_dup($1);
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($2));
+    }
+    | TYPEDEF_NAME STRING argument_expression_list {
+        $$ = string_dup($1);
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($2));
+        string_add_str($$, string_get($3));
+    }
+    | TYPEDEF_NAME STRING {
+        $$ = string_dup($1);
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($2));
     }
     | postfix_expression '.' IDENTIFIER {
         $$ = string_dup($1);
@@ -640,23 +666,275 @@ type_specifier:
     }
     | atomic_type_specifier {
         $$ = string_dup($1);
+        string_add_char($$, ' ');
     }
     | struct_or_union_specifier {
         $$ = string_dup($1);
+        string_add_char($$, ' ');
     }
     | enum_specifier {
         $$ = string_dup($1);
+        string_add_char($$, ' ');
     }
     | object_specifier {
         $$ = string_dup($1);
+        /* string_add_char($$, ' '); */
     }
     | TYPEDEF_NAME { /* after defined as a typedef_name */
         $$ = string_dup($1);
+        string_add_char($$, ' ');
     }
     ;
 
 object_specifier:
-      object_keyword {}
+      model IDENTIFIER '{' struct_declaration_list '}' {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_str($$, " {\n");
+        string_add_str($$, string_get($4));
+        string_add_str($$, "\n}\n");
+        /** ADD MODEL DETAILS **/
+        if(hashmap_get(objects, string_get($2)) == NULL)
+            hashmap_add(objects, string_get($2), $2);
+        if(hashmap_get(typedef_names, string_get($2)) == NULL)
+            hashmap_add(typedef_names, string_get($2), $2);
+    }
+    | protocol IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' abstract_message_declaration_list '}' {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_str($$, " implements ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " {\n");
+        string_add_str($$, string_get($6));
+        string_add_str($$, "\n}\n");
+        /****/
+        if(hashmap_get(objects, string_get($2)) == NULL)
+            hashmap_add(objects, string_get($2), $2);
+        if(hashmap_get(typedef_names, string_get($2)) == NULL)
+            hashmap_add(typedef_names, string_get($2), $2);
+    }
+    | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' object_declaration_list '}' {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_str($$, " implements ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " {\n");
+        string_add_str($$, string_get($6));
+        string_add_str($$, "\n}\n");
+        /****/
+        if(hashmap_get(objects, string_get($2)) == NULL)
+            hashmap_add(objects, string_get($2), $2);
+        if(hashmap_get(typedef_names, string_get($2)) == NULL) {
+            hashmap_add(typedef_names, string_get($2), $2);
+            printf("Adding `%s`\n", string_get($2));
+        }
+    }
+    | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '(' parameter_type_list ')' '{' object_declaration_list '}' {
+        /* TODO -> USE STACK TO SAVE OBJECT NAMES */
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_str($$, " implements ");
+        string_add_str($$, string_get($4));
+        string_add_char($$, '(');
+        string_add_str($$, string_get($6));
+        string_add_char($$, ')');
+        string_add_str($$, " {\n");
+        string_add_str($$, string_get($9));
+        string_add_str($$, "\n}\n");
+        /****/
+        if(hashmap_get(objects, string_get($2)) == NULL)
+            hashmap_add(objects, string_get($2), $2);
+        if(hashmap_get(typedef_names, string_get($2)) == NULL)
+            hashmap_add(typedef_names, string_get($2), $2);
+    }
+    ;
+
+object_declaration_list:
+      object_declaration {
+        $$ = string_dup($1);
+    }
+    | object_declaration_list object_declaration {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+    }
+    ;
+
+object_declaration:
+      fields_declaration {
+        $$ = string_dup($1);
+    }
+    | constructor_declaration {
+        $$ = string_dup($1);
+    }
+    | destructor_declaration {
+        $$ = string_dup($1);
+    }
+    | message_declaration_list {
+        $$ = string_dup($1);
+    }
+    ;
+
+fields_declaration:
+      FIELDS '{' '}' {
+        $$ = new_string("fields {}\n");
+    }
+    | FIELDS '{' struct_declaration_list '}' {
+        $$ = new_string("fields {\n");
+        string_add_str($$, string_get($3));
+        string_add_str($$, "\n}\n");
+    }
+    ;
+
+constructor_declaration:
+      INIT compound_statement {
+        $$ = new_string("init ");
+        string_add_str($$, string_get($2));
+    }
+    ;
+
+destructor_declaration:
+      DEFER compound_statement {
+        $$ = new_string("defer ");
+        string_add_str($$, string_get($2));
+    }
+    ;
+
+abstract_message_declaration_list:
+      abstract_message_declaration {
+        $$ = string_dup($1);
+    }
+    | abstract_message_declaration_list abstract_message_declaration {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+    }
+    ;
+
+abstract_message_declaration:
+      '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING ';' {
+        $$ = new_string("(");
+        string_add_str($$, string_get($2));
+        string_add_str($$, ") ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($6));
+        string_add_str($$, ";\n");
+    }
+    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list ';' {
+        $$ = new_string("(");
+        string_add_str($$, string_get($2));
+        string_add_str($$, ") ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($6));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($8));
+        string_add_str($$, ";\n");
+    }
+
+message_declaration_list:
+      message_declaration {
+        $$ = string_dup($1);
+    }
+    | message_declaration_list message_declaration {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+    }
+    ;
+
+message_declaration:
+      '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND compound_statement {
+        $$ = new_string("(");
+        string_add_str($$, string_get($2));
+        string_add_str($$, ") ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($6));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($8));
+    }
+    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND block_item {
+        $$ = new_string("(");
+        string_add_str($$, string_get($2));
+        string_add_str($$, ") ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($6));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($8));
+    }
+    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list SEND compound_statement {
+        $$ = new_string("(");
+        string_add_str($$, string_get($2));
+        string_add_str($$, ") ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($6));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($8));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($10));
+    }
+    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list SEND block_item {
+        $$ = new_string("(");
+        string_add_str($$, string_get($2));
+        string_add_str($$, ") ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($6));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($8));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($10));
+    }
+    | MESSAGE STRING SEND compound_statement {
+        $$ = new_string("message ");
+        string_add_str($$, string_get($2));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($4));
+    }
+    | MESSAGE STRING SEND block_item {
+        $$ = new_string("message ");
+        string_add_str($$, string_get($2));
+        string_add_str($$, " |> ");
+        string_add_str($$, string_get($4));
+    }
+    ;
+
+declaration_specifiers_or_pointer:
+      declaration_specifiers {
+        $$ = string_dup($1);
+    }
+    | declaration_specifiers '*' {
+        $$ = string_dup($1);
+        string_add_char($$, '*');
+    }
+    ;
+
+self_or_super:
+      IDENTIFIER {
+        if(string_equals($1, new_string("self")))
+            $$ = new_string("self ");
+        else if(string_equals($1, new_string("super")))
+            $$ = new_string("super" );
+    }
+    ;
+
+model:
+      MODEL {
+        $$ = new_string("model ");
+    }
+    ;
+
+protocol:
+      PROTOCOL {
+        $$ = new_string("protocol ");
+    }
+    ;
+
+object:
+      OBJECT {
+        $$ = new_string("object ");
+    }
     ;
 
 struct_or_union_specifier:
@@ -1015,7 +1293,14 @@ parameter_list:
     ;
 
 parameter_declaration:
-      declaration_specifiers declarator {
+      '(' declaration_specifiers_or_pointer ')' ':' declarator {
+        /* TODO -> ADDED HERE */
+        $$ = new_string("(");
+        string_add_str($$, string_get($2));
+        string_add_str($$, "): ");
+        string_add_str($$, string_get($5));
+    }
+    | declaration_specifiers declarator {
         $$ = string_dup($1);
         string_add_str($$, string_get($2));
     }
@@ -1667,7 +1952,21 @@ extern FILE *yyin;
 void yyerror(char *s) {
     fflush(stdout);
     warning(s, (char*)0);
-    yyparse();
+    printf("``%s``\n", string_get(translation));
+    /* yyparse(); */
+}
+
+void __setup_hashmaps(void) {
+    typedef_names = new_hashmap();
+    enum_constants = new_hashmap();
+    objects = new_hashmap();
+}
+
+static void display_strings(string *item) {
+    printf("\t%s\n", string_get(item));
+}
+static void display_hashmap(hashmap *map) {
+    hashmap_map(map, (lambda)display_strings, VALUES);
 }
 
 int main(int argc, char **argv) {
@@ -1675,10 +1974,22 @@ int main(int argc, char **argv) {
 
     yyin = fopen(argv[1], "r");
     translation = new_string("");
-    typedef_names = new_hashmap();
+    __setup_hashmaps();
 
+    /**/
+    hashmap_add(typedef_names, "size_t", new_string("size_t"));
+    hashmap_add(objects, "Object", new_string("Object"));
+    hashmap_add(typedef_names, "Object", new_string("Object"));
+    /**/
     yyparse();
-    
+
+/* printf("\ntypedef_names\n");
+display_hashmap(typedef_names);
+printf("\nenum_constants\n");
+display_hashmap(enum_constants);
+printf("\nobjects\n");
+display_hashmap(objects); */
+
     /*********************************/
     FILE *fp = fopen("out.c", "w");
     fprintf(fp, "%s", string_get(translation));
