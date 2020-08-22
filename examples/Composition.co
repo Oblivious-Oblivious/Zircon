@@ -1,7 +1,7 @@
 #include "syntaxme.h"
 #include <stdio.h>
 
-object Composition_Model {
+model Composition_Model {
     int a;
     int b;
 }
@@ -17,7 +17,7 @@ protocol Composition_Protocol implements Object {
 object Composition implements Composition_Protocol(int aValue, int bValue) {
     fields {
         /* Compose objects */
-        Data @data1;
+        Composition_Model @data1;
     }
 
     init {
@@ -43,13 +43,13 @@ object Composition implements Composition_Protocol(int aValue, int bValue) {
 
 int main(void) {
     Composition @obj = Composition "new" 2, 2;
-    printf("%d\n", @obj "add"); /* `4` */
+    printf("%d\n", obj "add"); /* `4` */
 
     /* ANTIPATTERN */
-    @obj "set a" 5;
-    @obj "set b" 3;
+    obj "set a" 5;
+    obj "set b" 3;
 
-    int res = @obj "add";
+    int res = obj "add";
     printf("%d\n", res); /* `8` */
 
     return 0;

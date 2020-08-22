@@ -7,7 +7,6 @@
 #define fields(stuff);
 
 #define implements
-#define self
-#define super
+// #define self
+// #define super
 #define message
-#define supermessage
