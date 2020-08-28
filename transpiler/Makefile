@@ -1,6 +1,6 @@
 CC = gcc
 OPT = -O2 -march=native
-VERSION = -std=c89
+#VERSION = -std=c89
 OUTPUT = a.out
 
 FLAGS =
@@ -26,9 +26,9 @@ bison:
 compiler: flex bison
 	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
 	cp a.out testcases/compiler
-	./a.out testcases/test8.c
+	./a.out testcases/objects/main.co
 	gcc out.c -o out
 	./out
 
 clean:
-	rm -f $(OUTPUT) $(LEX_OUT) $(YACC_OUT).c $(YACC_OUT).h out.c out
+	rm -f $(OUTPUT) $(LEX_OUT) $(YACC_OUT).c $(YACC_OUT).h out.c out object.h

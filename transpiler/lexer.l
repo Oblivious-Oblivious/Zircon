@@ -33,10 +33,6 @@ WS [ \t\v\n\f]
 extern hashmap *typedef_names;
 extern hashmap *enum_constants;
 
-/****/
-/* extern hashmap *objects; */
-/****/
-
 extern void yyerror(const char*);
 static int tokenize_type(void);
 
@@ -66,6 +62,7 @@ int sym_type(char *identifier) {
 
 "implements"                           tokenize(IMPLEMENTS);
 "message"                              tokenize(MESSAGE);
+"supermessage"                         tokenize(SUPERMESSAGE);
 
 "auto"                                 tokenize(AUTO);
 "break"                                tokenize(BREAK);
@@ -184,6 +181,8 @@ int sym_type(char *identifier) {
     yyterminate();
 }
 "//".*                                 ;
+
+"#import"                              tokenize(IMPORT);
 
 "#define"                              tokenize(DEFINE);
 "#include"                             tokenize(INCLUDE);

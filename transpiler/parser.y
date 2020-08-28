@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "stdboolean.h"
 #include "string.h"
 #include "hashmap.h"
 
@@ -17,16 +18,26 @@ string *translation;
 
 /* Hashmaps containing special identifiers */
 hashmap *typedef_names;
+hashmap *object_names;
 hashmap *enum_constants;
+
+/****/
+hashmap *models;
+hashmap *protocols;
 hashmap *objects;
+/****/
+
+vector *init_nodes;
+string *main_parameters;
 
 %}
 
 %union {
     string *String;
+    vector *Vector;
 }
 
-%token OBJECT MODEL PROTOCOL INIT DEFER FIELDS IMPLEMENTS MESSAGE
+%token OBJECT MODEL PROTOCOL INIT DEFER FIELDS IMPLEMENTS MESSAGE SUPERMESSAGE IMPORT
 
 %token AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN FLOAT FOR GOTO IF INT LONG REGISTER RETURN SHORT SIGNED SIZEOF STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE
 %token BOOL COMPLEX IMAGINARY INLINE RESTRICT
@@ -62,9 +73,11 @@ hashmap *objects;
 %type<String> block_item_list block_item expression_statement selection_statement iteration_statement jump_statement translation_unit
 %type<String> external_declaration function_definition declaration_list
 
-%type<String> model protocol object object_specifier object_declaration_list message_declaration_list fields_declaration
-%type<String> constructor_declaration destructor_declaration object_declaration self_or_super message_declaration abstract_message_declaration
-%type<String> abstract_message_declaration_list declaration_specifiers_or_pointer
+%type<String> model protocol object object_specifier self_or_super declaration_specifiers_or_pointer
+
+%type<Vector> abstract_message_declaration_list abstract_message_declaration model_declaration_list model_declaration
+%type<Vector> constructor_declaration destructor_declaration message_declaration_list message_declaration
+%type<Vector> object_declaration_list object_declaration fields_declaration
 
 %type<String> preprocessor_directive preprocessor_control_line preprocessor_constant_expression preprocessor_conditional
 %type<String> preprocessor_if_part preprocessor_elif_parts preprocessor_else_part preprocessor_if_line preprocessor_elif_line preprocessor_else_line
@@ -177,26 +190,59 @@ postfix_expression:
     }
     | postfix_expression STRING argument_expression_list {
         /* TODO -> ADDED HERE */
-        $$ = string_dup($1);
-        string_add_char($$, ' ');
+        $$ = new_string("");
+
+        /* Remove quotations */
+        string_skip($2, 1);
+        string_shorten($2, string_length($2) - 2);
+
         string_add_str($$, string_get($2));
+        string_add_char($$, '(');
+        string_add_str($$, string_get($1));
+        string_add_str($$, ", ");
         string_add_str($$, string_get($3));
+        string_add_char($$, ')');
     }
     | postfix_expression STRING {
-        $$ = string_dup($1);
-        string_add_char($$, ' ');
+        /* TODO -> ADDED HERE */
+        $$ = new_string("");
+
+        /* Remove quotations */
+        string_skip($2, 1);
+        string_shorten($2, string_length($2) - 1);
+
         string_add_str($$, string_get($2));
+        string_add_char($$, '(');
+        string_add_str($$, string_get($1));
+        string_add_char($$, ')');
     }
     | TYPEDEF_NAME STRING argument_expression_list {
-        $$ = string_dup($1);
-        string_add_char($$, ' ');
+        /* TODO -> ADDED HERE */
+        $$ = new_string("");
+        
+        /* Remove quotations */
+        string_skip($2, 1);
+        string_shorten($2, string_length($2) - 2);
+
         string_add_str($$, string_get($2));
+        string_add_char($$, '(');
+        string_add_str($$, string_get($1));
+        string_add_str($$, ", ");
         string_add_str($$, string_get($3));
+        string_add_char($$, ')');
     }
     | TYPEDEF_NAME STRING {
-        $$ = string_dup($1);
-        string_add_char($$, ' ');
+        /* TODO -> ADDED HERE */
+        $$ = new_string("");
+
+        /* Remove quotations */
+        string_skip($2, 1);
+        string_shorten($2, string_length($2) - 1);
+
         string_add_str($$, string_get($2));
+        string_add_char($$, '(');
+        string_add_str($$, string_get($1));
+        string_add_char($$, ')');
     }
     | postfix_expression '.' IDENTIFIER {
         $$ = string_dup($1);
@@ -676,227 +722,333 @@ type_specifier:
         $$ = string_dup($1);
         string_add_char($$, ' ');
     }
-    | object_specifier {
-        $$ = string_dup($1);
-        /* string_add_char($$, ' '); */
-    }
     | TYPEDEF_NAME { /* after defined as a typedef_name */
-        $$ = string_dup($1);
+        /* TODO -> ADDED HERE */
+        // $$ = string_dup($1);
+        $$ = new_string("struct ");
+        string_add_str($$, string_get($1));
         string_add_char($$, ' ');
     }
     ;
 
 object_specifier:
-      model IDENTIFIER '{' struct_declaration_list '}' {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, " {\n");
-        string_add_str($$, string_get($4));
-        string_add_str($$, "\n}\n");
-        /** ADD MODEL DETAILS **/
-        if(hashmap_get(objects, string_get($2)) == NULL)
-            hashmap_add(objects, string_get($2), $2);
+      model IDENTIFIER '{' model_declaration_list '}' {
+        $$ = new_string("");
+
+        hashmap *model_fields = new_hashmap();
+        int i;
+        for(i = 0; i < vector_length($4); i++) {
+            vector *current = vector_get($4, i);
+            /* And a hashmap entry with the variable name and
+                store the vector that describes the variable */
+            hashmap_add(model_fields, string_get(vector_get(current, 1)), current);
+        }
+        hashmap_add(models, string_get($2), model_fields);
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
+        if(hashmap_get(object_names, string_get($2)) == NULL)
+            hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
     }
     | protocol IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' abstract_message_declaration_list '}' {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, " implements ");
-        string_add_str($$, string_get($4));
-        string_add_str($$, " {\n");
-        string_add_str($$, string_get($6));
-        string_add_str($$, "\n}\n");
-        /****/
-        if(hashmap_get(objects, string_get($2)) == NULL)
-            hashmap_add(objects, string_get($2), $2);
+        $$ = new_string("");
+
+        /* contains (superclass): string, and (messages): vector */
+        vector *protocol_entry = new_vector();
+        vector_add(protocol_entry, $4);
+
+        hashmap *protocol_messages = new_hashmap();
+        int i;
+        for(i = 0; i < vector_length($6); i++) {
+            vector *current = vector_get($6, i);
+            /* Add a hashmap entry with the messsage name and 
+                store the vector that describes the message */
+            hashmap_add(protocol_messages, string_get(vector_get(current, 2)), current);
+        }
+        vector_add(protocol_entry, protocol_messages);
+
+        hashmap_add(protocols, string_get($2), protocol_entry);
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
+        if(hashmap_get(object_names, string_get($2)) == NULL)
+            hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
     }
     | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' object_declaration_list '}' {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, " implements ");
-        string_add_str($$, string_get($4));
-        string_add_str($$, " {\n");
-        string_add_str($$, string_get($6));
-        string_add_str($$, "\n}\n");
-        /****/
-        if(hashmap_get(objects, string_get($2)) == NULL)
-            hashmap_add(objects, string_get($2), $2);
-        if(hashmap_get(typedef_names, string_get($2)) == NULL) {
-            hashmap_add(typedef_names, string_get($2), $2);
-            printf("Adding `%s`\n", string_get($2));
+        $$ = new_string("");
+
+        vector *object_entry = new_vector();
+        hashmap *object_fields = new_hashmap();
+        hashmap *object_messages = new_hashmap();
+
+        /*******/
+        vector *object_declaration_fields = vector_get($6, 0);
+        vector *object_declaration_messages = vector_get($6, 1);
+        int i;
+        for(i = 0; i < vector_length(object_declaration_fields); i++) {
+            vector *current = vector_get(object_declaration_fields, i);
+
+            /* Add a hashmap entry with the field name and
+                store the vector that describes the field */
+            hashmap_add(object_fields, string_get(vector_get(current, 1)), current);
         }
+        for(i = 0; i < vector_length(object_declaration_messages); i++) {
+            vector *current = vector_get(object_declaration_messages, i);
+
+            /* Add a hashmap entry with the message name and
+                store the vector that describes the message */
+            hashmap_add(object_messages, string_get(vector_get(current, 2)), current);
+        }
+        /*******/
+
+        vector_add(object_entry, $4); /* name */
+        vector *object_entry_data = new_vector();
+        vector_add(object_entry_data, object_fields);
+        vector_add(object_entry_data, new_string(""));
+        vector_add(object_entry_data, object_messages);
+        vector_add(object_entry, object_entry_data); /* the 3 hashmaps */
+
+        hashmap_add(objects, string_get($2), object_entry);
+        if(hashmap_get(typedef_names, string_get($2)) == NULL)
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
+        if(hashmap_get(object_names, string_get($2)) == NULL)
+            hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
     }
     | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '(' parameter_type_list ')' '{' object_declaration_list '}' {
         /* TODO -> USE STACK TO SAVE OBJECT NAMES */
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, " implements ");
-        string_add_str($$, string_get($4));
-        string_add_char($$, '(');
-        string_add_str($$, string_get($6));
-        string_add_char($$, ')');
-        string_add_str($$, " {\n");
-        string_add_str($$, string_get($9));
-        string_add_str($$, "\n}\n");
-        /****/
-        if(hashmap_get(objects, string_get($2)) == NULL)
-            hashmap_add(objects, string_get($2), $2);
+        $$ = new_string("");
+
+        vector *object_entry = new_vector();
+        hashmap *object_fields = new_hashmap();
+        hashmap *object_messages = new_hashmap();
+
+        /*******/
+        vector *object_declaration_fields = vector_get($9, 0);
+        vector *object_declaration_messages = vector_get($9, 1);
+        int i;
+        for(i = 0; i < vector_length(object_declaration_fields); i++) {
+            vector *current = vector_get(object_declaration_fields, i);
+
+            /* Add a hashmap entry with the field name and
+                store the vector that describes the field */
+            hashmap_add(object_fields, string_get(vector_get(current, 1)), current);
+        }
+        for(i = 0; i < vector_length(object_declaration_messages); i++) {
+            vector *current = vector_get(object_declaration_messages, i);
+
+            /* Add a hashmap entry with the message name and
+                store the vector that describes the message */
+            hashmap_add(object_messages, string_get(vector_get(current, 2)), current);
+        }
+        /*******/
+
+        vector_add(object_entry, $4); /* super */
+        vector *object_entry_data = new_vector();
+        vector_add(object_entry_data, object_fields);
+        vector_add(object_entry_data, $6);
+        vector_add(object_entry_data, object_messages);
+        vector_add(object_entry, object_entry_data); /* the 3 hashmaps */
+
+        hashmap_add(objects, string_get($2), object_entry);
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
+        if(hashmap_get(object_names, string_get($2)) == NULL)
+            hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
     }
     ;
 
 object_declaration_list:
       object_declaration {
-        $$ = string_dup($1);
+        $$ = vector_dup($1);
     }
     | object_declaration_list object_declaration {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
+        $$ = vector_dup($1);
+        vector_add($$, $2);
     }
     ;
 
 object_declaration:
       fields_declaration {
-        $$ = string_dup($1);
-    }
-    | constructor_declaration {
-        $$ = string_dup($1);
-    }
-    | destructor_declaration {
-        $$ = string_dup($1);
+        $$ = vector_dup($1);
     }
     | message_declaration_list {
-        $$ = string_dup($1);
+        $$ = vector_dup($1);
     }
     ;
 
 fields_declaration:
       FIELDS '{' '}' {
-        $$ = new_string("fields {}\n");
+        $$ = new_vector();
+        vector_add($$, new_vector());
     }
-    | FIELDS '{' struct_declaration_list '}' {
-        $$ = new_string("fields {\n");
-        string_add_str($$, string_get($3));
-        string_add_str($$, "\n}\n");
-    }
-    ;
+    | FIELDS '{' IMPLEMENTS TYPEDEF_NAME ';' '}' {
+        /* TODO -> ADDED HERE */
+        $$ = new_vector();
+        vector *current_fields = new_vector();
 
-constructor_declaration:
-      INIT compound_statement {
-        $$ = new_string("init ");
-        string_add_str($$, string_get($2));
+        hashmap *current_model = hashmap_get(models, string_get($4));
+        int i;
+        for(i = 0; i < current_model->alloced; i++)
+            if(current_model->data[i].in_use != 0)
+                vector_add(current_fields, current_model->data[i].data);
+        
+        vector_add($$, current_fields);
     }
-    ;
+    | FIELDS '{' IMPLEMENTS TYPEDEF_NAME ';' model_declaration_list '}' {
+        /* TODO -> ADDED HERE */
+        $$ = new_vector();
 
-destructor_declaration:
-      DEFER compound_statement {
-        $$ = new_string("defer ");
-        string_add_str($$, string_get($2));
+        hashmap *current_model = hashmap_get(models, string_get($4));
+        int i;
+        for(i = 0; i < current_model->alloced; i++)
+            if(current_model->data[i].in_use != 0) {
+                vector_add($6, current_model->data[i].data);
+            }
+        
+        vector_add($$, $6);
+    }
+    | FIELDS '{' model_declaration_list '}' {
+        $$ = new_vector();
+        vector_add($$, $3);
     }
     ;
 
 abstract_message_declaration_list:
       abstract_message_declaration {
-        $$ = string_dup($1);
+        $$ = new_vector();
+        vector_add($$, $1);
     }
     | abstract_message_declaration_list abstract_message_declaration {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
+        $$ = new_vector();
+        int i;
+        for(i = 0; i < vector_length($1); i++)
+            vector_add($$, vector_get($1, i));
+        vector_add($$, $2);
     }
     ;
 
 abstract_message_declaration:
       '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING ';' {
-        $$ = new_string("(");
-        string_add_str($$, string_get($2));
-        string_add_str($$, ") ");
-        string_add_str($$, string_get($4));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($6));
-        string_add_str($$, ";\n");
+        $$ = new_vector();
+        vector_add($$, $2); /* return value */
+        vector_add($$, $4); /* sender */
+        vector_add($$, $6); /* name */
+        vector_add($$, new_string("")); /* parameter entries */
+        vector_add($$, new_string("")); /* method block */
     }
     | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list ';' {
-        $$ = new_string("(");
-        string_add_str($$, string_get($2));
-        string_add_str($$, ") ");
-        string_add_str($$, string_get($4));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($6));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($8));
-        string_add_str($$, ";\n");
+        $$ = new_vector();
+        vector_add($$, $2); /* return value */
+        vector_add($$, $4); /* sender */
+        vector_add($$, $6); /* name */
+        vector_add($$, $8); /* parameter entries */
+        vector_add($$, new_string("")); /* method block */
     }
 
 message_declaration_list:
       message_declaration {
-        $$ = string_dup($1);
+        $$ = new_vector();
+        vector_add($$, $1);
     }
     | message_declaration_list message_declaration {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
+        $$ = new_vector();
+        int i;
+        for(i = 0; i < vector_length($1); i++)
+            vector_add($$, vector_get($1, i));
+        vector_add($$, $2);
     }
     ;
 
 message_declaration:
       '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND compound_statement {
-        $$ = new_string("(");
-        string_add_str($$, string_get($2));
-        string_add_str($$, ") ");
-        string_add_str($$, string_get($4));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($6));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($8));
+        $$ = new_vector();
+        vector_add($$, $2); /* return value */
+        vector_add($$, $4); /* sender */
+        vector_add($$, $6); /* name */
+        vector_add($$, new_vector()); /* variable entries */
+        vector_add($$, $8); /* method block */
     }
     | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND block_item {
-        $$ = new_string("(");
-        string_add_str($$, string_get($2));
-        string_add_str($$, ") ");
-        string_add_str($$, string_get($4));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($6));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($8));
+        $$ = new_vector();
+        vector_add($$, $2); /* return vaule */
+        vector_add($$, $4); /* sender */
+        vector_add($$, $6); /* name */
+        vector_add($$, new_vector()); /* variable entries */
+        vector_add($$, $8); /* method block */
     }
     | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list SEND compound_statement {
-        $$ = new_string("(");
-        string_add_str($$, string_get($2));
-        string_add_str($$, ") ");
-        string_add_str($$, string_get($4));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($6));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($8));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($10));
+        $$ = new_vector();
+        vector_add($$, $2); /* return value */
+        vector_add($$, $4); /* sender */
+        vector_add($$, $6); /* name */
+        vector_add($$, $8); /* variable entries */
+        vector_add($$, $10); /* method block */
     }
     | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list SEND block_item {
-        $$ = new_string("(");
-        string_add_str($$, string_get($2));
-        string_add_str($$, ") ");
-        string_add_str($$, string_get($4));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($6));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($8));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($10));
+        $$ = new_vector();
+        vector_add($$, $2); /* return value */
+        vector_add($$, $4); /* sender */
+        vector_add($$, $6); /* name */
+        vector_add($$, $8); /* variable entries */
+        vector_add($$, $10); /* method block */
     }
     | MESSAGE STRING SEND compound_statement {
-        $$ = new_string("message ");
-        string_add_str($$, string_get($2));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($4));
+        $$ = new_vector();
+        vector_add($$, new_string("")); /* return value */
+        vector_add($$, new_string("self")); /* sender */
+        vector_add($$, $2); /* name */
+        vector_add($$, new_vector()); /* variable entries */
+        vector_add($$, $4); /* method block */
     }
     | MESSAGE STRING SEND block_item {
-        $$ = new_string("message ");
-        string_add_str($$, string_get($2));
-        string_add_str($$, " |> ");
-        string_add_str($$, string_get($4));
+        $$ = new_vector();
+        vector_add($$, new_string("")); /* return value */
+        vector_add($$, new_string("self")); /* sender */
+        vector_add($$, $2); /* name */
+        vector_add($$, new_vector()); /* variable entries */
+        vector_add($$, $4); /* method block */
+    }
+    | SUPERMESSAGE STRING SEND compound_statement {
+        $$ = new_vector();
+        vector_add($$, new_string("")); /* return value */
+        vector_add($$, new_string("super")); /* sender */
+        vector_add($$, $2); /* name */
+        vector_add($$, new_vector()); /* variable entries */
+        vector_add($$, $4); /* method block */
+    }
+    | SUPERMESSAGE STRING SEND block_item {
+        $$ = new_vector();
+        vector_add($$, new_string("")); /* return value */
+        vector_add($$, new_string("super")); /* sender */
+        vector_add($$, $2); /* name */
+        vector_add($$, new_vector()); /* variable entries */
+        vector_add($$, $4); /* method block */
+    }
+    | constructor_declaration {
+        $$ = vector_dup($1);
+    }
+    | destructor_declaration {
+        $$ = vector_dup($1);
+    }
+    ;
+
+constructor_declaration:
+      INIT compound_statement {
+        $$ = new_vector();
+        vector_add($$, new_string("void")); /* return value */
+        vector_add($$, new_string("self")); /* sender */
+        vector_add($$, new_string("\"new\"")); /* name */
+        vector_add($$, new_string("va_list *app")); /* variable entries */
+        vector_add($$, $2); /* method block */
+    }
+    ;
+
+destructor_declaration:
+      DEFER compound_statement {
+        $$ = new_vector();
+        vector_add($$, new_string("void")); /* return value */
+        vector_add($$, new_string("self")); /* sender */
+        vector_add($$, new_string("\"defer\"")); /* name */
+        vector_add($$, new_string("void")); /* variable entries */
+        vector_add($$, $2); /* method block */
     }
     ;
 
@@ -952,14 +1104,14 @@ struct_or_union_specifier:
         string_add_str($$, "\n}\n");
         /****/
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
     }
     | struct_or_union IDENTIFIER {
         $$ = string_dup($1);
         string_add_str($$, string_get($2));
         /****/
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
     }
     ;
 
@@ -969,6 +1121,25 @@ struct_or_union:
     }
     | UNION {
         $$ = new_string("union ");
+    }
+    ;
+
+model_declaration_list:
+      model_declaration {
+        $$ = vector_dup($1);
+        vector_add($$, $1); /* Add the first element */
+    }
+    | model_declaration_list model_declaration {
+        $$ = vector_dup($1);
+        vector_add($$, $2);
+    }
+    ;
+
+model_declaration:
+      declaration_specifiers_or_pointer struct_declarator_list ';' {
+        $$ = new_vector();
+        vector_add($$, $1); /* type */
+        vector_add($$, $2); /* name */
     }
     ;
 
@@ -1061,7 +1232,7 @@ enum_specifier:
         string_add_str($$, "\n}\n");
         /****/
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
     }
     | ENUM IDENTIFIER '{' enumerator_list ',' '}' {
         $$ = new_string("enum ");
@@ -1071,14 +1242,14 @@ enum_specifier:
         string_add_str($$, ",\n}\n");
         /****/
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
     }
     | ENUM IDENTIFIER {
         $$ = new_string("enum ");
         string_add_str($$, string_get($2));
         /****/
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
     }
     ;
 
@@ -1564,7 +1735,7 @@ labeled_statement:
         string_add_str($$, string_get($3));
         /****/
         if(hashmap_get(typedef_names, string_get($1)) == NULL)
-            hashmap_add(typedef_names, string_get($1), $1);
+            hashmap_add(typedef_names, string_get(string_dup($1)), (void*)true);
     }
     | CASE constant_expression ':' statement {
         $$ = new_string("case ");
@@ -1694,7 +1865,7 @@ jump_statement:
         string_add_str($$, ";\n");
         /****/
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get($2), $2);
+            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
     }
     | CONTINUE ';'          {
         $$ = new_string("continue");
@@ -1736,19 +1907,45 @@ external_declaration:
     | declaration {
         $$ = string_dup($1);
     }
+    | object_specifier {
+        $$ = string_dup($1);
+    }
     ;
 
 function_definition:
       declaration_specifiers declarator declaration_list compound_statement {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, string_get($3));
-        string_add_str($$, string_get($4));
+        if(string_equals(string_substring($2, 0, 3), new_string("main"))) {
+            $$ = string_dup($1);
+            string_add_str($$, string_get($2));
+            string_add_str($$, string_get($3));
+            
+            /* Store parameters for real main */
+            string_add_str(main_parameters, string_get($3));
+
+            string_add_str($$, " {\n__setup_objects();\n");
+            string_add_str($$, string_get($4));
+            string_add_str($$, "}\n");
+        }
+        else {
+            $$ = string_dup($1);
+            string_add_str($$, string_get($2));
+            string_add_str($$, string_get($3));
+            string_add_str($$, string_get($4));
+        }
     }
     | declaration_specifiers declarator compound_statement {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, string_get($3));
+        if(string_equals(string_substring($2, 0, 3), new_string("main"))) {
+            $$ = string_dup($1);
+            string_add_str($$, string_get($2));
+            string_add_str($$, " {\n__setup_objects();\n");
+            string_add_str($$, string_get($3));
+            string_add_str($$, "}\n");
+        }
+        else {
+            $$ = string_dup($1);
+            string_add_str($$, string_get($2));
+            string_add_str($$, string_get($3));
+        }
     }
     ;
 
@@ -1813,6 +2010,28 @@ preprocessor_control_line:
         string_add_str($$, string_get($2));
         string_add_char($$, '\n');
         /* Newline is added on the string */
+    }
+    | IMPORT STRING {
+        /* TODO -> ADDED HERE */
+        string *import_value = new_string("");
+        string_add_str(import_value, string_get($2));
+
+        /* Remove quotations */
+        string_skip(import_value, 1);
+        string_shorten(import_value, string_length(import_value) - 1);
+
+        /* Add to object names */
+        if(hashmap_get(typedef_names, string_get(import_value)) == NULL)
+            hashmap_add(typedef_names, string_get(string_dup(import_value)), (void*)true);
+        if(hashmap_get(object_names, string_get(import_value)) == NULL)
+            hashmap_add(object_names, string_get(string_dup(import_value)), (void*)true);
+
+        /* Add a `.h` */
+        string_add_str(import_value, ".h");
+
+        $$ = new_string("\n#include \"");
+        string_add_str($$, string_get(import_value));
+        string_add_str($$, "\"\n");
     }
     | LINE INT_CONSTANT {
         $$ = new_string("\n#line ");
@@ -1952,22 +2171,312 @@ extern FILE *yyin;
 void yyerror(char *s) {
     fflush(stdout);
     warning(s, (char*)0);
-    printf("``%s``\n", string_get(translation));
+    printf("`%s`\n", string_get(translation));
     /* yyparse(); */
 }
 
-void __setup_hashmaps(void) {
+static void __setup_hashmaps(void) {
     typedef_names = new_hashmap();
     enum_constants = new_hashmap();
+    object_names = new_hashmap();
+    main_parameters = new_string("");
+}
+
+static void __setup_initial_object(void) {
+    string *obj = new_string("");
+    string_add_str(obj, "#ifndef __OBJECT_H_\n");
+    string_add_str(obj, "#define __OBJECT_H_\n\n");
+    string_add_str(obj, "#include <assert.h>\n");
+    string_add_str(obj, "#include <stdio.h>\n");
+    string_add_str(obj, "#include <stdlib.h>\n");
+    string_add_str(obj, "#include <string.h>\n");
+    string_add_str(obj, "#include <stdarg.h>\n");
+    string_add_str(obj, "#include <stddef.h>\n\n");
+    string_add_str(obj, "struct Object {\n");
+    string_add_str(obj, "   const struct Class *class;\n");
+    string_add_str(obj, "};\n");
+    string_add_str(obj, "struct Class {\n");
+    string_add_str(obj, "	const struct Object _;\n");
+    string_add_str(obj, "	const char *name;\n");
+    string_add_str(obj, "	const struct Class *super;\n");
+    string_add_str(obj, "	size_t size;\n");
+    string_add_str(obj, "	void *(*ctor)(void *self, va_list *app);\n");
+    string_add_str(obj, "	void *(*dtor)(void *self);\n");
+    string_add_str(obj, "	int (*differ)(const void *self, const void *other);\n");
+    string_add_str(obj, "	int (*puto)(const void *self, FILE *fd);\n");
+    string_add_str(obj, "};\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static const void *classOf(const void *_self) {\n");
+    string_add_str(obj, "	const struct Object *self = _self;\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(_self && self && self->class);\n");
+    string_add_str(obj, "	return self->class;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static size_t sizeOf(const void *_self) {\n");
+    string_add_str(obj, "	const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "	return class->size;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static const void *super(const void *_self) {\n");
+    string_add_str(obj, "	const struct Class *self = _self;\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(_self && self && self->super);\n");
+    string_add_str(obj, "	return self->super;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "void *ctor(void *_self, va_list *app) {\n");
+    string_add_str(obj, "	const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "	\n");
+    string_add_str(obj, "	assert(class->ctor);\n");
+    string_add_str(obj, "	return class->ctor(_self, app);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "void *super_ctor(const void *_class, void *_self, va_list *app) {\n");
+    string_add_str(obj, "	const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(_self && superclass->ctor);\n");
+    string_add_str(obj, "	return superclass->ctor(_self, app);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "void *dtor(void *_self) {\n");
+    string_add_str(obj, "	const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(class->dtor);\n");
+    string_add_str(obj, "	return class->dtor(_self);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "void *super_dtor(const void *_class, void *_self) {\n");
+    string_add_str(obj, "	const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(_self && superclass->dtor);\n");
+    string_add_str(obj, "	return superclass->dtor(_self);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "int differ(const void *_self, const void *other) {\n");
+    string_add_str(obj, "	const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(class->differ);\n");
+    string_add_str(obj, "	return class->differ(_self, other);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "int super_differ(const void *_class, const void *_self, const void *other) {\n");
+    string_add_str(obj, "	const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(_self && superclass->differ);\n");
+    string_add_str(obj, "	return superclass->differ(_self, other);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "int puto(const void *_self, FILE *fd) {\n");
+    string_add_str(obj, "	const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(class->puto);\n");
+    string_add_str(obj, "	return class->puto(_self, fd);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "int super_puto(const void *_class, const void *_self, FILE *fd) {\n");
+    string_add_str(obj, "	const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(_self && superclass->puto);\n");
+    string_add_str(obj, "	return superclass->puto(_self, fd);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static void *Object_ctor(void *_self, va_list *app) {\n");
+    string_add_str(obj, "	return _self;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static void *Object_dtor(void *_self) {\n");
+    string_add_str(obj, "	return _self;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static int Object_differ(const void *_self, const void *other) {\n");
+    string_add_str(obj, "	return _self != other;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static int Object_puto(const void *_self, FILE *fd) {\n");
+    string_add_str(obj, "	const struct Class *self = classOf(_self);\n");
+    string_add_str(obj, "	return fprintf(fd, \"%s at %p\\n\", self->name, _self);\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static void *Class_ctor(void *_self, va_list *app) {\n");
+    string_add_str(obj, "	struct Class *self = _self;\n");
+    string_add_str(obj, "	const size_t offset = offsetof(struct Class, ctor);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	self->name = va_arg(*app, char*);\n");
+    string_add_str(obj, "	self->super = va_arg(*app, struct Class*);\n");
+    string_add_str(obj, "	self->size = va_arg(*app, size_t);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	assert(self->super);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	memcpy((char*)self + offset, (char*)self->super + offset, sizeOf(self->super) - offset);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	typedef void (*voidf) ();\n");
+    string_add_str(obj, "	voidf selector;\n");
+    string_add_str(obj, "#ifdef va_copy\n");
+    string_add_str(obj, "	va_list ap;\n");
+    string_add_str(obj, "	va_copy(ap, *app);\n");
+    string_add_str(obj, "#else\n");
+    string_add_str(obj, "	va_list ap = *app;\n");
+    string_add_str(obj, "#endif\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	while((selector = va_arg(ap, voidf))) {\n");
+    string_add_str(obj, "		voidf method = va_arg(ap, voidf);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "		if(selector == (voidf)ctor)\n");
+    string_add_str(obj, "			*(voidf*)&self->ctor = method;\n");
+    string_add_str(obj, "		else if(selector == (voidf)dtor)\n");
+    string_add_str(obj, "			*(voidf*)&self->dtor = method;\n");
+    string_add_str(obj, "		else if(selector == (voidf)differ)\n");
+    string_add_str(obj, "			*(voidf*)&self->differ = method;\n");
+    string_add_str(obj, "		else if(selector == (voidf)puto)\n");
+    string_add_str(obj, "			*(voidf*)&self->puto = method;\n");
+    string_add_str(obj, "	}\n");
+    string_add_str(obj, "#ifdef va_copy\n");
+    string_add_str(obj, "    va_end(ap);\n");
+    string_add_str(obj, "#endif\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	return self;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static void *Class_dtor(void *_self) {\n");
+    string_add_str(obj, "	struct Class *self = _self;\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	fprintf(stderr, \"%s: cannot destroy class\\n\", self->name);\n");
+    string_add_str(obj, "	return 0;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static void *new(const void *_class, ...) {\n");
+    string_add_str(obj, "	const struct Class *class = _class;\n");
+    string_add_str(obj, "	assert(class && class->size);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	struct Object *object;\n");
+    string_add_str(obj, "	va_list ap;\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	object = (struct Object*)calloc(1, class->size);\n");
+    string_add_str(obj, "	assert(object);\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "	object->class = class;\n");
+    string_add_str(obj, "	va_start(ap, _class);\n");
+    string_add_str(obj, "		object = ctor(object, &ap);\n");
+    string_add_str(obj, "	va_end(ap);\n");
+    string_add_str(obj, "	return object;\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static void defer(void *_self) {\n");
+    string_add_str(obj, "	if(_self) free(dtor(_self));\n");
+    string_add_str(obj, "}\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "static const struct Class object [] = {\n");
+    string_add_str(obj, "	{\n");
+    string_add_str(obj, "		{ object + 1 },\n");
+    string_add_str(obj, "		\"Object\",\n");
+    string_add_str(obj, "		object,\n");
+    string_add_str(obj, "		sizeof(struct Object),\n");
+    string_add_str(obj, "		Object_ctor,\n");
+    string_add_str(obj, "		Object_dtor,\n");
+    string_add_str(obj, "		Object_differ,\n");
+    string_add_str(obj, "		Object_puto\n");
+    string_add_str(obj, "	},\n");
+    string_add_str(obj, "	{\n");
+    string_add_str(obj, "		{ object + 1 },\n");
+    string_add_str(obj, "		\"Class\",\n");
+    string_add_str(obj, "		object,\n");
+    string_add_str(obj, "		sizeof(struct Class),\n");
+    string_add_str(obj, "		Class_ctor,\n");
+    string_add_str(obj, "		Class_dtor,\n");
+    string_add_str(obj, "		Object_differ,\n");
+    string_add_str(obj, "		Object_puto\n");
+    string_add_str(obj, "	}\n");
+    string_add_str(obj, "};\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "const void *Object = object;\n");
+    string_add_str(obj, "const void *Class = object + 1;\n");
+    string_add_str(obj, "\n");
+    string_add_str(obj, "#endif\n");
+
+    /*********************************/
+    FILE *fp = fopen("object.h", "w");
+    fprintf(fp, "%s", string_get(obj));
+    fclose(fp);
+    /*********************************/
+}
+
+void __setup_objects(void) {
+    /* store variable entries -> (vector) */
+    models = new_hashmap();
+
+    /* store message entries -> (vector) */
+    protocols = new_hashmap();
+
+    /* store vectors of fields parameters and messages */
     objects = new_hashmap();
 }
 
-static void display_strings(string *item) {
-    printf("\t%s\n", string_get(item));
+static void write_init_calls(char *o) {
+    /* If the node is `Object` we dont need to initialize it */
+    if(string_equals(new_string(o), new_string("Object"))) return;
+
+    string_add_str(translation, "    __init_");
+    string_add_str(translation, o);
+    string_add_str(translation, "();\n");
+}
+void __setup_init_objects(void) {
+    string_add_str(translation, "static void __setup_objects(void) {\n");
+    hashmap_map(object_names, (lambda)write_init_calls, KEYS);
+    string_add_str(translation, "}\n");
+}
+
+static void display_strings(char *item) {
+    printf("\t%s\n", item);
 }
 static void display_hashmap(hashmap *map) {
-    hashmap_map(map, (lambda)display_strings, VALUES);
+    hashmap_map(map, (lambda)display_strings, KEYS);
 }
+
+/**/
+static void display_entry(vector *entry) {
+    printf("\033[1;36mentry\033[0m: `(%s): %s`\n", string_get(vector_get(entry, 0)), string_get(vector_get(entry, 1)));
+}
+static void display_hashmap_of_entries(hashmap *variable_entries) {
+    hashmap_map(variable_entries, (lambda)display_entry, VALUES);
+}
+static void iterate_on_models(void) {
+    hashmap_map(models, (lambda)display_hashmap_of_entries, VALUES);
+}
+/**/
+
+/**/
+static void display_message(vector *message) {
+    printf("\033[38;5;11mmessage\033[0m: (%s) %s |> %s |> `%s` |> `%s`\n",
+        string_get(vector_get(message, 0)),
+        string_get(vector_get(message, 1)),
+        string_get(vector_get(message, 2)),
+        string_get(vector_get(message, 3)),
+        string_get(vector_get(message, 4)));
+}
+static void display_hashmap_of_messages(vector *protocol_data) {
+    hashmap *messages = vector_get(protocol_data, 1);
+    hashmap_map(messages, (lambda)display_message, VALUES);
+}
+static void iterate_on_protocols(void) {
+    hashmap_map(protocols, (lambda)display_hashmap_of_messages, VALUES);
+}
+/**/
+
+/**/
+static void display_hashmap_of_objects(vector *object_vector) {
+    vector *object_data = vector_get(object_vector, 1); /* 0th is name of super */
+    printf("\t\033[38;5;78mfields\033[0m\n");
+    hashmap_map(vector_get(object_data, 0), (lambda)display_entry, VALUES);
+    printf("\t\033[38;5;78mparameters\033[0m\n");
+    printf("`%s`\n", string_get(vector_get(object_data, 1)));
+    printf("\t\033[38;5;78mmessages\033[0m\n");
+    hashmap_map(vector_get(object_data, 2), (lambda)display_message, VALUES);
+}
+static void iterate_on_objects(void) {
+    hashmap_map(objects, (lambda)display_hashmap_of_objects, VALUES);
+}
+/**/
 
 int main(int argc, char **argv) {
     assert(argc == 2 && argv && argv[1]);
@@ -1975,20 +2484,35 @@ int main(int argc, char **argv) {
     yyin = fopen(argv[1], "r");
     translation = new_string("");
     __setup_hashmaps();
+    __setup_objects();
+    /**/
+    hashmap_add(typedef_names, "size_t", (void*)true);
+    hashmap_add(typedef_names, "Object", (void*)true);
+    /**/
 
-    /**/
-    hashmap_add(typedef_names, "size_t", new_string("size_t"));
-    hashmap_add(objects, "Object", new_string("Object"));
-    hashmap_add(typedef_names, "Object", new_string("Object"));
-    /**/
+    /* Write the initial `object.h` */
+    __setup_initial_object();
+
+    /* Parse the text */
     yyparse();
+    /******************/
 
-/* printf("\ntypedef_names\n");
+    /* Write the init nodes */
+    __setup_init_objects();
+
+printf("\n\033[38;5;207mtypedef_names\033[0m\n");
 display_hashmap(typedef_names);
-printf("\nenum_constants\n");
+printf("\n\033[38;5;207menum_constants\033[0m\n");
 display_hashmap(enum_constants);
-printf("\nobjects\n");
-display_hashmap(objects); */
+printf("\n\033[38;5;207mobject_names\033[0m\n");
+display_hashmap(object_names);
+
+printf("\n\033[38;5;207mmodels\033[0m\n");
+iterate_on_models();
+printf("\n\033[38;5;207mprotocols\033[0m\n");
+iterate_on_protocols();
+printf("\n\033[38;5;207mobjects\033[0m\n");
+iterate_on_objects();
 
     /*********************************/
     FILE *fp = fopen("out.c", "w");

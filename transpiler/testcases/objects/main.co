@@ -1,0 +1,51 @@
+#import "Object"
+#import "Point"
+#import "Circle"
+
+object Any implements Object {
+    fields {}
+    supermessage "differ" |> return 0;
+}
+
+/* For usage in many object calls */
+static void draw_stuff(void *o) {
+    o "draw";
+    o "move" 10, 20;
+    o "draw";
+}
+
+static void any(void) {
+    Object o = Object "new";
+    Any a = Any "new";
+
+    Any "puto" stdout;
+    o "puto" stdout;
+    a "puto" stdout;
+
+    // if(o "differ" o == a "differ" a)
+    //     printf("ok\n");
+    // if(o "differ" a != a "differ" o)
+    //     printf("not commutative\n");
+
+    o "defer";
+    a "defer";
+    (void*)Any "defer";
+}
+
+int main(int argc, char **argv) {
+    any();
+    puts("");
+
+    Point p = Point "new" 1, 2;
+    Circle c = Circle "new" 2, 3, 5;
+
+    draw_stuff(p);
+    draw_stuff(c);
+
+    c "hello";
+
+    p "defer";
+    c "defer";
+
+    return 0;
+}
