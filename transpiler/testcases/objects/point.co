@@ -1,18 +1,10 @@
 #import "Object"
 
-model Point_Model {
-    int x;
-    int y;
-}
-
-protocol Point_Protocol implements Object {
-    (void) self |> "draw";
-    (void) self |> "move" |> (int): dx, (int): dy;
-}
-
-object Point implements Point_Protocol(int x, int y) {
+object Point implements Object((int): x, (int): y) {
     fields {
-        implements Point_Model;
+        // implements Point_Model;
+        int x;
+        int y;
     }
 
     init {
@@ -20,11 +12,11 @@ object Point implements Point_Protocol(int x, int y) {
         self->y = y;
     }
 
-    message "draw" |> {
+    (void) self |> "draw" |> {
         printf("\".\" at (%d, %d)\n", self->x, self->y);
     }
 
-    message "move" |> {
+    (void) self |> "move" |> (int): dx, (int): dy |> {
         self->x += dx;
         self->y += dy;
     }

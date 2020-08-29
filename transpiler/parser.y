@@ -15,6 +15,7 @@ void yyerror(char*);
 
 /* Result of the parsed file */
 string *translation;
+bool main_flag = false;
 
 /* Hashmaps containing special identifiers */
 hashmap *typedef_names;
@@ -27,8 +28,10 @@ hashmap *protocols;
 hashmap *objects;
 /****/
 
-vector *init_nodes;
-string *main_parameters;
+static char replace_spaces(char c) {
+    if(c == ' ') return '_';
+    return c;
+}
 
 %}
 
@@ -77,7 +80,7 @@ string *main_parameters;
 
 %type<Vector> abstract_message_declaration_list abstract_message_declaration model_declaration_list model_declaration
 %type<Vector> constructor_declaration destructor_declaration message_declaration_list message_declaration
-%type<Vector> object_declaration_list object_declaration fields_declaration
+%type<Vector> object_declaration_list object_declaration fields_declaration object_parameter_type_list object_parameter_type
 
 %type<String> preprocessor_directive preprocessor_control_line preprocessor_constant_expression preprocessor_conditional
 %type<String> preprocessor_if_part preprocessor_elif_parts preprocessor_else_part preprocessor_if_line preprocessor_elif_line preprocessor_else_line
@@ -196,6 +199,9 @@ postfix_expression:
         string_skip($2, 1);
         string_shorten($2, string_length($2) - 2);
 
+        /* Replace spaces */
+        $2 = string_map($2, (stringlambda)replace_spaces);
+
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
         string_add_str($$, string_get($1));
@@ -211,6 +217,9 @@ postfix_expression:
         string_skip($2, 1);
         string_shorten($2, string_length($2) - 1);
 
+        /* Replace spaces */
+        $2 = string_map($2, (stringlambda)replace_spaces);
+
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
         string_add_str($$, string_get($1));
@@ -223,6 +232,9 @@ postfix_expression:
         /* Remove quotations */
         string_skip($2, 1);
         string_shorten($2, string_length($2) - 2);
+
+        /* Replace spaces */
+        $2 = string_map($2, (stringlambda)replace_spaces);
 
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
@@ -238,6 +250,9 @@ postfix_expression:
         /* Remove quotations */
         string_skip($2, 1);
         string_shorten($2, string_length($2) - 1);
+
+        /* Replace spaces */
+        $2 = string_map($2, (stringlambda)replace_spaces);
 
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
@@ -723,11 +738,7 @@ type_specifier:
         string_add_char($$, ' ');
     }
     | TYPEDEF_NAME { /* after defined as a typedef_name */
-        /* TODO -> ADDED HERE */
-        // $$ = string_dup($1);
-        $$ = new_string("struct ");
-        string_add_str($$, string_get($1));
-        string_add_char($$, ' ');
+        $$ = string_dup($1);
     }
     ;
 
@@ -746,31 +757,31 @@ object_specifier:
         hashmap_add(models, string_get($2), model_fields);
         if(hashmap_get(typedef_names, string_get($2)) == NULL)
             hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
-        if(hashmap_get(object_names, string_get($2)) == NULL)
-            hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
+        // if(hashmap_get(object_names, string_get($2)) == NULL)
+        //     hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
     }
     | protocol IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' abstract_message_declaration_list '}' {
         $$ = new_string("");
 
-        /* contains (superclass): string, and (messages): vector */
-        vector *protocol_entry = new_vector();
-        vector_add(protocol_entry, $4);
+        // /* contains (superclass): string, and (messages): vector */
+        // vector *protocol_entry = new_vector();
+        // vector_add(protocol_entry, $4);
 
-        hashmap *protocol_messages = new_hashmap();
-        int i;
-        for(i = 0; i < vector_length($6); i++) {
-            vector *current = vector_get($6, i);
-            /* Add a hashmap entry with the messsage name and 
-                store the vector that describes the message */
-            hashmap_add(protocol_messages, string_get(vector_get(current, 2)), current);
-        }
-        vector_add(protocol_entry, protocol_messages);
+        // hashmap *protocol_messages = new_hashmap();
+        // int i;
+        // for(i = 0; i < vector_length($6); i++) {
+        //     vector *current = vector_get($6, i);
+        //     /* Add a hashmap entry with the messsage name and 
+        //         store the vector that describes the message */
+        //     hashmap_add(protocol_messages, string_get(vector_get(current, 2)), current);
+        // }
+        // vector_add(protocol_entry, protocol_messages);
 
-        hashmap_add(protocols, string_get($2), protocol_entry);
-        if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
-        if(hashmap_get(object_names, string_get($2)) == NULL)
-            hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
+        // hashmap_add(protocols, string_get($2), protocol_entry);
+        // if(hashmap_get(typedef_names, string_get($2)) == NULL)
+        //     hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
+        // if(hashmap_get(object_names, string_get($2)) == NULL)
+        //     hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
     }
     | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' object_declaration_list '}' {
         $$ = new_string("");
@@ -811,8 +822,441 @@ object_specifier:
             hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
         if(hashmap_get(object_names, string_get($2)) == NULL)
             hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
+        
+        /* Translate the parsed data */
+        string_add_str($$, "\n#ifndef __");
+        string_add_str($$, string_get($2));
+        string_add_str($$, "_\n");
+        string_add_str($$, "#define __");
+        string_add_str($$, string_get($2));
+        string_add_str($$, "_\n\n");
+
+        string_add_str($$, "/* INDLUDE SUPER */\n");
+        string_add_str($$, "#include \"");
+        string_add_str($$, string_get($4));
+        string_add_str($$, ".h\"\n\n");
+        string_add_str($$, "/* REPRESENTATION */\n");
+        string_add_str($$, "struct ");
+        string_add_str($$, string_get($2));
+        string_add_str($$, " {\n    const struct ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " _;\n");
+        
+        for(i = 0; i < object_fields->alloced; i++) {
+            if(object_fields->data[i].in_use != 0) {
+                vector *field = object_fields->data[i].data;
+                string_add_str($$, string_get(vector_get(field, 0)));
+                // string_add_char($$, ' ');
+                string_add_str($$, string_get(vector_get(field, 1)));
+                string_add_str($$, ";\n");
+            }
+        }
+        string_add_str($$, "};\n");
+        
+        /* Count locally defined messages */
+        int locally_defined_messages = 0;
+        for(i = 0; i < object_messages->alloced; i++) {
+            if(object_messages->data[i].in_use != 0) {
+                vector *message = object_messages->data[i].data;
+                
+                /* Remove quotations */
+                string *name = vector_get(message, 2);
+                string_skip(name, 1);
+                string_shorten(name, string_length(name) - 2);
+
+                /* Replace spaces */
+                name = string_map(name, (stringlambda)replace_spaces);
+                vector_set(message, 2, name);
+
+                if(string_equals(vector_get(message, 1), new_string("self "))) {
+                    locally_defined_messages++;
+                }
+            }
+        }
+
+        string *inherited_class = new_string("");        
+        if(locally_defined_messages != 0) {
+            string_add_str($$, "struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class {\n");
+
+            if(string_equals($4, new_string("Object")))
+                string_add_str(inherited_class, "Class");
+            else {
+                string_add_str(inherited_class, string_get($4));
+                string_add_str(inherited_class, "Class");
+            }
+            string_add_str($$, "    const struct ");
+            string_add_str($$, string_get(inherited_class));
+            string_add_str($$, " _;\n");
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(!string_equals(vector_get(message, 2), new_string("new"))
+                    && !string_equals(vector_get(message, 2), new_string("defer"))
+                    && !string_equals(vector_get(message, 1), new_string("super "))) {
+                        string_add_str($$, "    ");
+                        string_add_str($$, string_get(vector_get(message, 0)));
+                        string_add_str($$, " (*");
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        if(string_length(vector_get(message, 3)) == 0)
+                            string_add_str($$, ")(const void *self");
+                        else {
+                            string_add_str($$, ")(const void *self");
+                            vector *message_fields = vector_get(message, 3);
+                            int j;
+                            for(j = 0; j < vector_length(message_fields); j++) {
+                                string_add_str($$, ", ");
+                                vector *current_message_fields = vector_get(message_fields, j);
+                                string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                                string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                            }
+                        }
+                        string_add_str($$, ");\n");
+                    }
+                }
+            }
+            string_add_str($$, "};");
+        }
+
+        string_add_str($$, "\n\n");
+        string_add_str($$, "/* DECLARATIONS */\n");
+        string_add_str($$, "const void *");
+        string_add_str($$, string_get($2));
+        string_add_str($$, ";\n");
+        if(locally_defined_messages != 0) {
+            string_add_str($$, "const void *");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class;\n");
+        }
+
+        string_add_str($$, "\n/* SELECTORS */\n");
+        if(locally_defined_messages != 0) {
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(!string_equals(vector_get(message, 2), new_string("new"))
+                    && !string_equals(vector_get(message, 2), new_string("defer"))
+                    && !string_equals(vector_get(message, 1), new_string("super "))) {
+                        /* Write base call */
+                        // string_add_str($$, "void *");
+                        string_add_str($$, string_get(vector_get(message, 0)));
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        if(string_length(vector_get(message, 3)) == 0)
+                            string_add_str($$, "(const void *_self");
+                        else {
+                            string_add_str($$, "(const void *_self");
+                            vector *message_fields = vector_get(message, 3);
+                            int j;
+                            for(j = 0; j < vector_length(message_fields); j++) {
+                                string_add_str($$, ", ");
+                                vector *current_message_fields = vector_get(message_fields, j);
+                                string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                                string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                            }
+                        }
+                        string_add_str($$, ") {\n");
+                        string_add_str($$, "    const struct ");
+                        string_add_str($$, string_get($2));
+                        string_add_str($$, "Class *class = classOf(_self);\n\n");
+                        string_add_str($$, "    assert(class->");
+
+                        string *name = vector_get(message, 2);
+                        string_add_str($$, string_get(name));
+                        string_add_str($$, ");\n");
+                        string_add_str($$, "    return class->");
+                        string_add_str($$, string_get(name));
+                        string_add_str($$, "(_self");
+                        vector *message_fields = vector_get(message, 3);
+                        int j;
+                        for(j = 0; j < vector_length(message_fields); j++) {
+                            string_add_str($$, ", ");
+                            vector *current_message_fields = vector_get(message_fields, j);
+                            string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                        }
+                        string_add_str($$, ");\n}\n");
+
+                        /* Write super call */
+                        // string_add_str($$, "void *");
+                        string_add_str($$, string_get(vector_get(message, 0)));
+                        string_add_str($$, "super_");
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        if(string_length(vector_get(message, 3)) == 0)
+                            string_add_str($$, "(const void *_class, const void *_self");
+                        else {
+                            string_add_str($$, "(const void *_class, const void *_self");
+                            vector *message_fields = vector_get(message, 3);
+                            int j;
+                            for(j = 0; j < vector_length(message_fields); j++) {
+                                string_add_str($$, ", ");
+                                vector *current_message_fields = vector_get(message_fields, j);
+                                string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                                string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                            }
+                        }
+                        string_add_str($$, ") {\n");
+                        string_add_str($$, "    const struct ");
+                        string_add_str($$, string_get($2));
+                        string_add_str($$, "Class *superclass = super(_class);\n\n");
+                        string_add_str($$, "    assert(_self && superclass->");
+                        string_add_str($$, string_get(name));
+                        string_add_str($$, ");\n");
+                        string_add_str($$, "    return superclass->");
+                        string_add_str($$, string_get(name));
+                        string_add_str($$, "(_self");
+                        for(j = 0; j < vector_length(message_fields); j++) {
+                            string_add_str($$, ", ");
+                            vector *current_message_fields = vector_get(message_fields, j);
+                            string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                        }
+                        string_add_str($$, ");\n}\n");
+                    }
+                }
+            }
+        }
+
+        string_add_str($$, "\n/* METHODS */\n");
+        bool constructor_is_overriden = false;
+        bool destructor_is_overriden = false;
+        string *method_on_new;
+        string *method_on_defer;
+        for(i = 0; i < object_messages->alloced; i++) {
+            if(object_messages->data[i].in_use != 0) {
+                vector *message = object_messages->data[i].data;
+                if(string_equals(vector_get(message, 2), new_string("new"))) {
+                    constructor_is_overriden = true;
+                    method_on_new = vector_get(message, 4);
+                }
+                if(string_equals(vector_get(message, 2), new_string("defer"))) {
+                    destructor_is_overriden = true;
+                    method_on_defer = vector_get(message, 4);
+                }
+            }
+        }
+
+        if(constructor_is_overriden) {
+            string_add_str($$, "void *");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "_ctor(void *_self, va_list *app) {\n");
+            string_add_str($$, "    struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, " *self = super_ctor(");
+            string_add_str($$, string_get($2));
+            string_add_str($$, ", _self, app);\n\n");
+
+            /***********************************************/
+            string_add_str($$, string_get(method_on_new));
+            /***********************************************/
+            
+            string_add_str($$, "    return self;\n};\n");
+        }
+        if(destructor_is_overriden) {
+            string_add_str($$, "void *");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "_dtor(void *_self) {\n");
+            string_add_str($$, "    struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, " *self = super_dtor(");
+            string_add_str($$, string_get($2));
+            string_add_str($$, ", _self);\n\n");
+            string_add_str($$, string_get(method_on_defer));
+            string_add_str($$, "\n    return 0;\n};\n");
+        }
+
+        for(i = 0; i < object_messages->alloced; i++) {
+            if(object_messages->data[i].in_use != 0) {
+                vector *message = object_messages->data[i].data;
+                if(string_equals(vector_get(message, 2), new_string("new"))
+                || string_equals(vector_get(message, 2), new_string("defer")))
+                    continue;
+                string_add_str($$, string_get(vector_get(message, 0)));
+                string_add_char($$, ' ');
+                string_add_str($$, string_get($2));
+                string_add_str($$, "_");
+                string_add_str($$, string_get(vector_get(message, 2)));
+                if(string_length(vector_get(message, 3)) == 0)
+                    string_add_str($$, "(void *_self");
+                else {
+                    string_add_str($$, "(void *_self");
+                    vector *message_fields = vector_get(message, 3);
+                    int j;
+                    for(j = 0; j < vector_length(message_fields); j++) {
+                        string_add_str($$, ", ");
+                        vector *current_message_fields = vector_get(message_fields, j);
+                        string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                        string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                    }
+                }
+                string_add_str($$, ") {\n");
+                string_add_str($$, "struct ");
+                string_add_str($$, string_get($2));
+                string_add_str($$, " *self = _self;\n");
+                string_add_str($$, "struct ");
+                string_add_str($$, string_get($4));
+                string_add_str($$, " *super = (struct ");
+                string_add_str($$, string_get($4));
+                string_add_str($$, "*)self;\n\n");
+                string_add_str($$, string_get(vector_get(message, 4)));
+                string_add_str($$, "}\n\n");
+            }
+        }
+
+        if(locally_defined_messages != 0) {
+            string_add_str($$, "void *");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class_ctor(void *_self, va_list *app) {\n");
+            string_add_str($$, "    struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class *self = super_ctor(");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class, _self, app);\n\n");
+            string_add_str($$, "    typedef void (*voidf)();\n");
+            string_add_str($$, "    voidf selector;\n");
+            string_add_str($$, "#ifdef va_copy\n");
+            string_add_str($$, "    va_list ap;\n");
+            string_add_str($$, "    va_copy(ap, *app);\n");
+            string_add_str($$, "#else\n");
+            string_add_str($$, "    va_list ap = *app;\n");
+            string_add_str($$, "#endif\n");
+            string_add_str($$, "    while((selector = va_arg(ap, voidf))) {\n");
+            string_add_str($$, "        voidf method = va_arg(ap, voidf);\n\n");
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(string_equals(vector_get(message, 2), new_string("new"))
+                    || string_equals(vector_get(message, 2), new_string("defer"))
+                    || string_equals(vector_get(message, 1), new_string("super ")))
+                        continue;
+                    string_add_str($$, "        if(selector == (voidf)");
+                    string_add_str($$, string_get(vector_get(message, 2)));
+                    string_add_str($$, ")\n");
+                    string_add_str($$, "            *(voidf*)&self->");
+                    string_add_str($$, string_get(vector_get(message, 2)));
+                    string_add_str($$, " = method;\n");
+                }
+            }
+            string_add_str($$, "    }\n");
+            string_add_str($$, "#ifdef va_copy\n");
+            string_add_str($$, "    va_end(ap);\n");
+            string_add_str($$, "#endif\n\n");
+            string_add_str($$, "    return self;\n");
+            string_add_str($$, "}\n");
+        }
+
+        string_add_str($$, "/* INITIALIZATION */\n");
+        string_add_str($$, "void __init_");
+        string_add_str($$, string_get($2));
+        string_add_str($$, "(void) {\n");
+        if(!string_equals($4, new_string("Object"))) {
+            string_add_str($$, "__init_");
+            string_add_str($$, string_get($4));
+            string_add_str($$, "();\n");
+        }
+
+        if(locally_defined_messages != 0) {
+            string_add_str($$, "if(!");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class) ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class = new(");
+            string_add_str($$, "Class,\n");
+            string_add_char($$, '\"');
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class\",\n");
+            if(!string_equals($4, new_string("Object"))) {
+                string_add_str($$, string_get($4));
+                string_add_str($$, "Class,\n");
+            }
+            else
+                string_add_str($$, "Class,\n");
+            string_add_str($$, "sizeof(struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class),\n");
+            string_add_str($$, "ctor, ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class_ctor,\n");
+            string_add_str($$, "0);\n");
+
+            string_add_str($$, "if(!");
+            string_add_str($$, string_get($2));
+            string_add_str($$, ") ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, " = new(\n");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class,\n");
+            string_add_char($$, '\"');
+            string_add_str($$, string_get($2));
+            string_add_str($$, "\",\n");
+            string_add_str($$, string_get($4));
+            string_add_str($$, ",\n");
+            string_add_str($$, "sizeof(struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "),\n");
+
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(!string_equals(vector_get(message, 2), new_string("new"))
+                    && !string_equals(vector_get(message, 2), new_string("defer"))) {
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        string_add_str($$, ", ");
+                        string_add_str($$, string_get($2));
+                        string_add_str($$, "_");
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        string_add_str($$, ",\n");
+                    }
+                }
+            }
+        }
+        else {
+            string_add_str($$, "if(!");
+            string_add_str($$, string_get($2));
+            string_add_str($$, ") ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, " = new(\n");
+            string_add_str($$, "Class,\n");
+            string_add_char($$, '\"');
+            string_add_str($$, string_get($2));
+            string_add_str($$, "\",\n");
+            string_add_str($$, string_get($4));
+            string_add_str($$, ",\n");
+            string_add_str($$, "sizeof(struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "),\n");
+
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(!string_equals(vector_get(message, 2), new_string("new"))
+                    && !string_equals(vector_get(message, 2), new_string("defer"))) {
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        string_add_str($$, ", ");
+                        string_add_str($$, string_get($2));
+                        string_add_str($$, "_");
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        string_add_str($$, ",\n");
+                    }
+                }
+            }
+        }
+
+        if(constructor_is_overriden) {
+            string_add_str($$, "ctor, ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "_ctor,\n");
+        }
+
+        if(destructor_is_overriden) {
+            string_add_str($$, "dtor, ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "_dtor,\n");
+        }
+
+        string_add_str($$, "0);\n}\n");
+
+        string_add_str($$, "#endif\n\n");
     }
-    | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '(' parameter_type_list ')' '{' object_declaration_list '}' {
+    | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '(' object_parameter_type_list ')' '{' object_declaration_list '}' {
         /* TODO -> USE STACK TO SAVE OBJECT NAMES */
         $$ = new_string("");
 
@@ -852,6 +1296,450 @@ object_specifier:
             hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
         if(hashmap_get(object_names, string_get($2)) == NULL)
             hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
+        
+        /* Translate the parsed data */
+        string_add_str($$, "\n#ifndef __");
+        string_add_str($$, string_get($2));
+        string_add_str($$, "_\n");
+        string_add_str($$, "#define __");
+        string_add_str($$, string_get($2));
+        string_add_str($$, "_\n\n");
+
+        string_add_str($$, "/* INDLUDE SUPER */\n");
+        string_add_str($$, "#include \"");
+        string_add_str($$, string_get($4));
+        string_add_str($$, ".h\"\n\n");
+        string_add_str($$, "/* REPRESENTATION */\n");
+        string_add_str($$, "struct ");
+        string_add_str($$, string_get($2));
+        string_add_str($$, " {\n    const struct ");
+        string_add_str($$, string_get($4));
+        string_add_str($$, " _;\n");
+        
+        for(i = 0; i < object_fields->alloced; i++) {
+            if(object_fields->data[i].in_use != 0) {
+                vector *field = object_fields->data[i].data;
+                string_add_str($$, string_get(vector_get(field, 0)));
+                // string_add_char($$, ' ');
+                string_add_str($$, string_get(vector_get(field, 1)));
+                string_add_str($$, ";\n");
+            }
+        }
+        string_add_str($$, "};\n");
+        
+        /* Count locally defined messages */
+        int locally_defined_messages = 0;
+        for(i = 0; i < object_messages->alloced; i++) {
+            if(object_messages->data[i].in_use != 0) {
+                vector *message = object_messages->data[i].data;
+                
+                /* Remove quotations */
+                string *name = vector_get(message, 2);
+                string_skip(name, 1);
+                string_shorten(name, string_length(name) - 2);
+
+                /* Replace spaces */
+                name = string_map(name, (stringlambda)replace_spaces);
+                vector_set(message, 2, name);
+
+                if(string_equals(vector_get(message, 1), new_string("self "))) {
+                    locally_defined_messages++;
+                }
+            }
+        }
+
+        string *inherited_class = new_string("");        
+        if(locally_defined_messages != 0) {
+            string_add_str($$, "struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class {\n");
+
+            if(string_equals($4, new_string("Object")))
+                string_add_str(inherited_class, "Class");
+            else {
+                string_add_str(inherited_class, string_get($4));
+                string_add_str(inherited_class, "Class");
+            }
+            string_add_str($$, "    const struct ");
+            string_add_str($$, string_get(inherited_class));
+            string_add_str($$, " _;\n");
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(!string_equals(vector_get(message, 2), new_string("new"))
+                    && !string_equals(vector_get(message, 2), new_string("defer"))
+                    && !string_equals(vector_get(message, 1), new_string("super "))) {
+                        string_add_str($$, "    ");
+                        string_add_str($$, string_get(vector_get(message, 0)));
+                        string_add_str($$, " (*");
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        if(string_length(vector_get(message, 3)) == 0)
+                            string_add_str($$, ")(const void *self");
+                        else {
+                            string_add_str($$, ")(const void *self");
+                            vector *message_fields = vector_get(message, 3);
+                            int j;
+                            for(j = 0; j < vector_length(message_fields); j++) {
+                                string_add_str($$, ", ");
+                                vector *current_message_fields = vector_get(message_fields, j);
+                                string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                                string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                            }
+                        }
+                        string_add_str($$, ");\n");
+                    }
+                }
+            }
+            string_add_str($$, "};");
+        }
+
+        string_add_str($$, "\n\n");
+        string_add_str($$, "/* DECLARATIONS */\n");
+        string_add_str($$, "const void *");
+        string_add_str($$, string_get($2));
+        string_add_str($$, ";\n");
+        if(locally_defined_messages != 0) {
+            string_add_str($$, "const void *");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class;\n");
+        }
+
+        string_add_str($$, "\n/* SELECTORS */\n");
+        if(locally_defined_messages != 0) {
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(!string_equals(vector_get(message, 2), new_string("new"))
+                    && !string_equals(vector_get(message, 2), new_string("defer"))
+                    && !string_equals(vector_get(message, 1), new_string("super "))) {
+                        /* Write base call */
+                        // string_add_str($$, "void *");
+                        string_add_str($$, string_get(vector_get(message, 0)));
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        if(string_length(vector_get(message, 3)) == 0)
+                            string_add_str($$, "(const void *_self");
+                        else {
+                            string_add_str($$, "(const void *_self");
+                            vector *message_fields = vector_get(message, 3);
+                            int j;
+                            for(j = 0; j < vector_length(message_fields); j++) {
+                                string_add_str($$, ", ");
+                                vector *current_message_fields = vector_get(message_fields, j);
+                                string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                                string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                            }
+                        }
+                        string_add_str($$, ") {\n");
+                        string_add_str($$, "    const struct ");
+                        string_add_str($$, string_get($2));
+                        string_add_str($$, "Class *class = classOf(_self);\n\n");
+                        string_add_str($$, "    assert(class->");
+
+                        string *name = vector_get(message, 2);
+                        string_add_str($$, string_get(name));
+                        string_add_str($$, ");\n");
+                        string_add_str($$, "    return class->");
+                        string_add_str($$, string_get(name));
+                        string_add_str($$, "(_self");
+                        vector *message_fields = vector_get(message, 3);
+                        int j;
+                        for(j = 0; j < vector_length(message_fields); j++) {
+                            string_add_str($$, ", ");
+                            vector *current_message_fields = vector_get(message_fields, j);
+                            string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                        }
+                        string_add_str($$, ");\n}\n");
+
+                        /* Write super call */
+                        // string_add_str($$, "void *");
+                        string_add_str($$, string_get(vector_get(message, 0)));
+                        string_add_str($$, "super_");
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        if(string_length(vector_get(message, 3)) == 0)
+                            string_add_str($$, "(const void *_class, const void *_self");
+                        else {
+                            string_add_str($$, "(const void *_class, const void *_self");
+                            vector *message_fields = vector_get(message, 3);
+                            int j;
+                            for(j = 0; j < vector_length(message_fields); j++) {
+                                string_add_str($$, ", ");
+                                vector *current_message_fields = vector_get(message_fields, j);
+                                string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                                string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                            }
+                        }
+                        string_add_str($$, ") {\n");
+                        string_add_str($$, "    const struct ");
+                        string_add_str($$, string_get($2));
+                        string_add_str($$, "Class *superclass = super(_class);\n\n");
+                        string_add_str($$, "    assert(_self && superclass->");
+                        string_add_str($$, string_get(name));
+                        string_add_str($$, ");\n");
+                        string_add_str($$, "    return superclass->");
+                        string_add_str($$, string_get(name));
+                        string_add_str($$, "(_self");
+                        for(j = 0; j < vector_length(message_fields); j++) {
+                            string_add_str($$, ", ");
+                            vector *current_message_fields = vector_get(message_fields, j);
+                            string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                        }
+                        string_add_str($$, ");\n}\n");
+                    }
+                }
+            }
+        }
+
+        string_add_str($$, "\n/* METHODS */\n");
+        bool constructor_is_overriden = false;
+        bool destructor_is_overriden = false;
+        string *method_on_new;
+        string *method_on_defer;
+        for(i = 0; i < object_messages->alloced; i++) {
+            if(object_messages->data[i].in_use != 0) {
+                vector *message = object_messages->data[i].data;
+                if(string_equals(vector_get(message, 2), new_string("new"))) {
+                    constructor_is_overriden = true;
+                    method_on_new = vector_get(message, 4);
+                }
+                if(string_equals(vector_get(message, 2), new_string("defer"))) {
+                    destructor_is_overriden = true;
+                    method_on_defer = vector_get(message, 4);
+                }
+            }
+        }
+
+        if(constructor_is_overriden) {
+            string_add_str($$, "void *");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "_ctor(void *_self, va_list *app) {\n");
+            string_add_str($$, "    struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, " *self = super_ctor(");
+            string_add_str($$, string_get($2));
+            string_add_str($$, ", _self, app");
+            string_add_str($$, ");\n\n");
+
+            /***********************************************/
+            vector *fields = $6;
+            int k;
+            for(k = 0; k < vector_length(fields); k++) {
+                vector *current_field = vector_get(fields, k);
+                string_add_str($$, string_get(vector_get(current_field, 0)));
+                string_add_str($$, string_get(vector_get(current_field, 1)));
+                string_add_str($$, " = va_arg(*app, ");
+                string_add_str($$, string_get(vector_get(current_field, 0)));
+                string_add_str($$, ");\n");
+            }
+            string_add_str($$, string_get(method_on_new));
+            /***********************************************/
+            
+            string_add_str($$, "    return self;\n}\n");
+        }
+        if(destructor_is_overriden) {
+            string_add_str($$, "void *");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "_dtor(void *_self) {\n");
+            string_add_str($$, "    struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, " *self = super_dtor(");
+            string_add_str($$, string_get($2));
+            string_add_str($$, ", _self);\n\n");
+            string_add_str($$, string_get(method_on_defer));
+            string_add_str($$, "\n    return 0;\n};\n");
+        }
+
+        for(i = 0; i < object_messages->alloced; i++) {
+            if(object_messages->data[i].in_use != 0) {
+                vector *message = object_messages->data[i].data;
+                if(string_equals(vector_get(message, 2), new_string("new"))
+                || string_equals(vector_get(message, 2), new_string("defer")))
+                    continue;
+                string_add_str($$, string_get(vector_get(message, 0)));
+                string_add_char($$, ' ');
+                string_add_str($$, string_get($2));
+                string_add_str($$, "_");
+                string_add_str($$, string_get(vector_get(message, 2)));
+                if(string_length(vector_get(message, 3)) == 0)
+                    string_add_str($$, "(void *_self");
+                else {
+                    string_add_str($$, "(void *_self");
+                    vector *message_fields = vector_get(message, 3);
+                    int j;
+                    for(j = 0; j < vector_length(message_fields); j++) {
+                        string_add_str($$, ", ");
+                        vector *current_message_fields = vector_get(message_fields, j);
+                        string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                        string_add_str($$, string_get(vector_get(current_message_fields, 1)));
+                    }
+                }
+                string_add_str($$, ") {\n");
+                string_add_str($$, "struct ");
+                string_add_str($$, string_get($2));
+                string_add_str($$, " *self = _self;\n");
+                string_add_str($$, "struct ");
+                string_add_str($$, string_get($4));
+                string_add_str($$, " *super = (struct ");
+                string_add_str($$, string_get($4));
+                string_add_str($$, "*)self;\n\n");
+                string_add_str($$, string_get(vector_get(message, 4)));
+                string_add_str($$, "}\n\n");
+            }
+        }
+
+        if(locally_defined_messages != 0) {
+            string_add_str($$, "void *");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class_ctor(void *_self, va_list *app) {\n");
+            string_add_str($$, "    struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class *self = super_ctor(");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class, _self, app);\n\n");
+            string_add_str($$, "    typedef void (*voidf)();\n");
+            string_add_str($$, "    voidf selector;\n");
+            string_add_str($$, "#ifdef va_copy\n");
+            string_add_str($$, "    va_list ap;\n");
+            string_add_str($$, "    va_copy(ap, *app);\n");
+            string_add_str($$, "#else\n");
+            string_add_str($$, "    va_list ap = *app;\n");
+            string_add_str($$, "#endif\n");
+            string_add_str($$, "    while((selector = va_arg(ap, voidf))) {\n");
+            string_add_str($$, "        voidf method = va_arg(ap, voidf);\n\n");
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(string_equals(vector_get(message, 2), new_string("new"))
+                    || string_equals(vector_get(message, 2), new_string("defer"))
+                    || string_equals(vector_get(message, 1), new_string("super ")))
+                        continue;
+                    string_add_str($$, "        if(selector == (voidf)");
+                    string_add_str($$, string_get(vector_get(message, 2)));
+                    string_add_str($$, ")\n");
+                    string_add_str($$, "            *(voidf*)&self->");
+                    string_add_str($$, string_get(vector_get(message, 2)));
+                    string_add_str($$, " = method;\n");
+                }
+            }
+            string_add_str($$, "    }\n");
+            string_add_str($$, "#ifdef va_copy\n");
+            string_add_str($$, "    va_end(ap);\n");
+            string_add_str($$, "#endif\n\n");
+            string_add_str($$, "    return self;\n");
+            string_add_str($$, "}\n");
+        }
+
+        string_add_str($$, "/* INITIALIZATION */\n");
+        string_add_str($$, "void __init_");
+        string_add_str($$, string_get($2));
+        string_add_str($$, "(void) {\n");
+        if(!string_equals($4, new_string("Object"))) {
+            string_add_str($$, "__init_");
+            string_add_str($$, string_get($4));
+            string_add_str($$, "();\n");
+        }
+        
+        if(locally_defined_messages != 0) {
+            string_add_str($$, "if(!");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class) ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class = new(");
+            string_add_str($$, "Class,\n");
+            string_add_char($$, '\"');
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class\",\n");
+            if(!string_equals($4, new_string("Object"))) {
+                string_add_str($$, string_get($4));
+                string_add_str($$, "Class,\n");
+            }
+            else
+                string_add_str($$, "Class,\n");
+            string_add_str($$, "sizeof(struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class),\n");
+            string_add_str($$, "ctor, ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class_ctor,\n");
+            string_add_str($$, "0);\n");
+
+            string_add_str($$, "if(!");
+            string_add_str($$, string_get($2));
+            string_add_str($$, ") ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, " = new(\n");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "Class,\n");
+            string_add_char($$, '\"');
+            string_add_str($$, string_get($2));
+            string_add_str($$, "\",\n");
+            string_add_str($$, string_get($4));
+            string_add_str($$, ",\n");
+            string_add_str($$, "sizeof(struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "),\n");
+
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(!string_equals(vector_get(message, 2), new_string("new"))
+                    && !string_equals(vector_get(message, 2), new_string("defer"))) {
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        string_add_str($$, ", ");
+                        string_add_str($$, string_get($2));
+                        string_add_str($$, "_");
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        string_add_str($$, ",\n");
+                    }
+                }
+            }
+        }
+        else {
+            string_add_str($$, "if(!");
+            string_add_str($$, string_get($2));
+            string_add_str($$, ") ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, " = new(\n");
+            string_add_str($$, "Class,\n");
+            string_add_char($$, '\"');
+            string_add_str($$, string_get($2));
+            string_add_str($$, "\",\n");
+            string_add_str($$, string_get($4));
+            string_add_str($$, ",\n");
+            string_add_str($$, "sizeof(struct ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "),\n");
+
+            for(i = 0; i < object_messages->alloced; i++) {
+                if(object_messages->data[i].in_use != 0) {
+                    vector *message = object_messages->data[i].data;
+                    if(!string_equals(vector_get(message, 2), new_string("new"))
+                    && !string_equals(vector_get(message, 2), new_string("defer"))) {
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        string_add_str($$, ", ");
+                        string_add_str($$, string_get($2));
+                        string_add_str($$, "_");
+                        string_add_str($$, string_get(vector_get(message, 2)));
+                        string_add_str($$, ",\n");
+                    }
+                }
+            }
+        }
+        
+        if(constructor_is_overriden) {
+            string_add_str($$, "ctor, ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "_ctor,\n");
+        }
+
+        if(destructor_is_overriden) {
+            string_add_str($$, "dtor, ");
+            string_add_str($$, string_get($2));
+            string_add_str($$, "_dtor,\n");
+        }
+
+        string_add_str($$, "0);\n}\n");
+
+        string_add_str($$, "#endif\n\n");
     }
     ;
 
@@ -914,33 +1802,33 @@ fields_declaration:
 abstract_message_declaration_list:
       abstract_message_declaration {
         $$ = new_vector();
-        vector_add($$, $1);
+        // vector_add($$, $1);
     }
     | abstract_message_declaration_list abstract_message_declaration {
         $$ = new_vector();
-        int i;
-        for(i = 0; i < vector_length($1); i++)
-            vector_add($$, vector_get($1, i));
-        vector_add($$, $2);
+        // int i;
+        // for(i = 0; i < vector_length($1); i++)
+        //     vector_add($$, vector_get($1, i));
+        // vector_add($$, $2);
     }
     ;
 
 abstract_message_declaration:
       '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING ';' {
         $$ = new_vector();
-        vector_add($$, $2); /* return value */
-        vector_add($$, $4); /* sender */
-        vector_add($$, $6); /* name */
-        vector_add($$, new_string("")); /* parameter entries */
-        vector_add($$, new_string("")); /* method block */
+        // vector_add($$, $2); /* return value */
+        // vector_add($$, $4); /* sender */
+        // vector_add($$, $6); /* name */
+        // vector_add($$, new_string("")); /* parameter entries */
+        // vector_add($$, new_string("")); /* method block */
     }
     | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list ';' {
         $$ = new_vector();
-        vector_add($$, $2); /* return value */
-        vector_add($$, $4); /* sender */
-        vector_add($$, $6); /* name */
-        vector_add($$, $8); /* parameter entries */
-        vector_add($$, new_string("")); /* method block */
+        // vector_add($$, $2); /* return value */
+        // vector_add($$, $4); /* sender */
+        // vector_add($$, $6); /* name */
+        // vector_add($$, $8); /* parameter entries */
+        // vector_add($$, new_string("")); /* method block */
     }
 
 message_declaration_list:
@@ -974,7 +1862,7 @@ message_declaration:
         vector_add($$, new_vector()); /* variable entries */
         vector_add($$, $8); /* method block */
     }
-    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list SEND compound_statement {
+    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND object_parameter_type_list SEND compound_statement {
         $$ = new_vector();
         vector_add($$, $2); /* return value */
         vector_add($$, $4); /* sender */
@@ -982,45 +1870,13 @@ message_declaration:
         vector_add($$, $8); /* variable entries */
         vector_add($$, $10); /* method block */
     }
-    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list SEND block_item {
+    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND object_parameter_type_list SEND block_item {
         $$ = new_vector();
         vector_add($$, $2); /* return value */
         vector_add($$, $4); /* sender */
         vector_add($$, $6); /* name */
         vector_add($$, $8); /* variable entries */
         vector_add($$, $10); /* method block */
-    }
-    | MESSAGE STRING SEND compound_statement {
-        $$ = new_vector();
-        vector_add($$, new_string("")); /* return value */
-        vector_add($$, new_string("self")); /* sender */
-        vector_add($$, $2); /* name */
-        vector_add($$, new_vector()); /* variable entries */
-        vector_add($$, $4); /* method block */
-    }
-    | MESSAGE STRING SEND block_item {
-        $$ = new_vector();
-        vector_add($$, new_string("")); /* return value */
-        vector_add($$, new_string("self")); /* sender */
-        vector_add($$, $2); /* name */
-        vector_add($$, new_vector()); /* variable entries */
-        vector_add($$, $4); /* method block */
-    }
-    | SUPERMESSAGE STRING SEND compound_statement {
-        $$ = new_vector();
-        vector_add($$, new_string("")); /* return value */
-        vector_add($$, new_string("super")); /* sender */
-        vector_add($$, $2); /* name */
-        vector_add($$, new_vector()); /* variable entries */
-        vector_add($$, $4); /* method block */
-    }
-    | SUPERMESSAGE STRING SEND block_item {
-        $$ = new_vector();
-        vector_add($$, new_string("")); /* return value */
-        vector_add($$, new_string("super")); /* sender */
-        vector_add($$, $2); /* name */
-        vector_add($$, new_vector()); /* variable entries */
-        vector_add($$, $4); /* method block */
     }
     | constructor_declaration {
         $$ = vector_dup($1);
@@ -1033,10 +1889,17 @@ message_declaration:
 constructor_declaration:
       INIT compound_statement {
         $$ = new_vector();
-        vector_add($$, new_string("void")); /* return value */
-        vector_add($$, new_string("self")); /* sender */
-        vector_add($$, new_string("\"new\"")); /* name */
-        vector_add($$, new_string("va_list *app")); /* variable entries */
+        vector_add($$, new_string("void ")); /* return value */
+        vector_add($$, new_string("super ")); /* sender */
+        vector_add($$, new_string("\"new\" ")); /* name */
+
+        vector *params = new_vector();
+        vector *param1 = new_vector();
+        vector_add(param1, new_string("va_list* "));
+        vector_add(param1, new_string("app"));
+        vector_add(params, param1);
+
+        vector_add($$, params); /* variable entries */
         vector_add($$, $2); /* method block */
     }
     ;
@@ -1044,10 +1907,10 @@ constructor_declaration:
 destructor_declaration:
       DEFER compound_statement {
         $$ = new_vector();
-        vector_add($$, new_string("void")); /* return value */
-        vector_add($$, new_string("self")); /* sender */
-        vector_add($$, new_string("\"defer\"")); /* name */
-        vector_add($$, new_string("void")); /* variable entries */
+        vector_add($$, new_string("void ")); /* return value */
+        vector_add($$, new_string("super ")); /* sender */
+        vector_add($$, new_string("\"defer\" ")); /* name */
+        vector_add($$, new_vector()); /* variable entries */
         vector_add($$, $2); /* method block */
     }
     ;
@@ -1067,7 +1930,7 @@ self_or_super:
         if(string_equals($1, new_string("self")))
             $$ = new_string("self ");
         else if(string_equals($1, new_string("super")))
-            $$ = new_string("super" );
+            $$ = new_string("super ");
     }
     ;
 
@@ -1123,6 +1986,27 @@ struct_or_union:
         $$ = new_string("union ");
     }
     ;
+
+object_parameter_type_list:
+      object_parameter_type {
+        $$ = new_vector();
+        vector_add($$, $1);
+    }
+    | object_parameter_type_list ',' object_parameter_type {
+        $$ = new_vector();
+        int i;
+        for(i = 0; i < vector_length($1); i++)
+            vector_add($$, vector_get($1, i));
+        vector_add($$, $3);
+    }
+    ;
+
+object_parameter_type:
+      '(' declaration_specifiers_or_pointer ')' ':' declarator {
+        $$ = new_vector();
+        vector_add($$, $2); /* type */
+        vector_add($$, $5); /* name */
+    }
 
 model_declaration_list:
       model_declaration {
@@ -1915,16 +2799,14 @@ external_declaration:
 function_definition:
       declaration_specifiers declarator declaration_list compound_statement {
         if(string_equals(string_substring($2, 0, 3), new_string("main"))) {
-            $$ = string_dup($1);
+            $$ = new_string("void __setup_objects(void);\n");
+            string_add_str($$, string_get($1));
             string_add_str($$, string_get($2));
             string_add_str($$, string_get($3));
-            
-            /* Store parameters for real main */
-            string_add_str(main_parameters, string_get($3));
-
             string_add_str($$, " {\n__setup_objects();\n");
             string_add_str($$, string_get($4));
             string_add_str($$, "}\n");
+            main_flag = true;
         }
         else {
             $$ = string_dup($1);
@@ -1935,11 +2817,13 @@ function_definition:
     }
     | declaration_specifiers declarator compound_statement {
         if(string_equals(string_substring($2, 0, 3), new_string("main"))) {
-            $$ = string_dup($1);
+            $$ = new_string("void __setup_objects(void);\n");
+            string_add_str($$, string_get($1));
             string_add_str($$, string_get($2));
             string_add_str($$, " {\n__setup_objects();\n");
             string_add_str($$, string_get($3));
             string_add_str($$, "}\n");
+            main_flag = true;
         }
         else {
             $$ = string_dup($1);
@@ -2029,9 +2913,10 @@ preprocessor_control_line:
         /* Add a `.h` */
         string_add_str(import_value, ".h");
 
-        $$ = new_string("\n#include \"");
-        string_add_str($$, string_get(import_value));
-        string_add_str($$, "\"\n");
+        $$ = new_string("");
+        // $$ = new_string("\n#include \"");
+        // string_add_str($$, string_get(import_value));
+        // string_add_str($$, "\"\n");
     }
     | LINE INT_CONSTANT {
         $$ = new_string("\n#line ");
@@ -2179,7 +3064,6 @@ static void __setup_hashmaps(void) {
     typedef_names = new_hashmap();
     enum_constants = new_hashmap();
     object_names = new_hashmap();
-    main_parameters = new_string("");
 }
 
 static void __setup_initial_object(void) {
@@ -2192,6 +3076,10 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "#include <string.h>\n");
     string_add_str(obj, "#include <stdarg.h>\n");
     string_add_str(obj, "#include <stddef.h>\n\n");
+    string_add_str(obj, "/** @param bool -> A 'big' enough size to hold both 1 and 0 **/\n");
+    string_add_str(obj, "typedef unsigned char bool;\n");
+    string_add_str(obj, "#define true 1\n");
+    string_add_str(obj, "#define false 0\n\n");
     string_add_str(obj, "struct Object {\n");
     string_add_str(obj, "   const struct Class *class;\n");
     string_add_str(obj, "};\n");
@@ -2395,7 +3283,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "#endif\n");
 
     /*********************************/
-    FILE *fp = fopen("object.h", "w");
+    FILE *fp = fopen("Object.h", "w");
     fprintf(fp, "%s", string_get(obj));
     fclose(fp);
     /*********************************/
@@ -2421,7 +3309,7 @@ static void write_init_calls(char *o) {
     string_add_str(translation, "();\n");
 }
 void __setup_init_objects(void) {
-    string_add_str(translation, "static void __setup_objects(void) {\n");
+    string_add_str(translation, "void __setup_objects(void) {\n");
     hashmap_map(object_names, (lambda)write_init_calls, KEYS);
     string_add_str(translation, "}\n");
 }
@@ -2447,20 +3335,29 @@ static void iterate_on_models(void) {
 
 /**/
 static void display_message(vector *message) {
+    int i;
+    string *params = new_string("");
+    vector *param_vector = vector_get(message, 3);
+    for(i = 0; i < vector_length(param_vector); i++) {
+        vector *current_param = vector_get(param_vector, i);
+        string_add_str(params, vector_get(current_param, 0));
+        string_add_str(params, " ");
+        string_add_str(params, vector_get(current_param, 1));
+    }
     printf("\033[38;5;11mmessage\033[0m: (%s) %s |> %s |> `%s` |> `%s`\n",
         string_get(vector_get(message, 0)),
         string_get(vector_get(message, 1)),
         string_get(vector_get(message, 2)),
-        string_get(vector_get(message, 3)),
+        string_get(params),
         string_get(vector_get(message, 4)));
 }
-static void display_hashmap_of_messages(vector *protocol_data) {
+/* static void display_hashmap_of_messages(vector *protocol_data) {
     hashmap *messages = vector_get(protocol_data, 1);
     hashmap_map(messages, (lambda)display_message, VALUES);
 }
 static void iterate_on_protocols(void) {
     hashmap_map(protocols, (lambda)display_hashmap_of_messages, VALUES);
-}
+} */
 /**/
 
 /**/
@@ -2487,7 +3384,7 @@ int main(int argc, char **argv) {
     __setup_objects();
     /**/
     hashmap_add(typedef_names, "size_t", (void*)true);
-    hashmap_add(typedef_names, "Object", (void*)true);
+    hashmap_add(typedef_names, "bool", (void*)true);
     /**/
 
     /* Write the initial `object.h` */
@@ -2498,21 +3395,21 @@ int main(int argc, char **argv) {
     /******************/
 
     /* Write the init nodes */
-    __setup_init_objects();
+    if(main_flag) __setup_init_objects();
 
-printf("\n\033[38;5;207mtypedef_names\033[0m\n");
+/* printf("\n\033[38;5;207mtypedef_names\033[0m\n");
 display_hashmap(typedef_names);
 printf("\n\033[38;5;207menum_constants\033[0m\n");
 display_hashmap(enum_constants);
 printf("\n\033[38;5;207mobject_names\033[0m\n");
-display_hashmap(object_names);
+display_hashmap(object_names); */
 
-printf("\n\033[38;5;207mmodels\033[0m\n");
+/* printf("\n\033[38;5;207mmodels\033[0m\n");
 iterate_on_models();
 printf("\n\033[38;5;207mprotocols\033[0m\n");
 iterate_on_protocols();
 printf("\n\033[38;5;207mobjects\033[0m\n");
-iterate_on_objects();
+iterate_on_objects(); */
 
     /*********************************/
     FILE *fp = fopen("out.c", "w");

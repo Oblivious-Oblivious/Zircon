@@ -1,33 +1,26 @@
 #import "Object"
 #import "Point"
 
-model Circle_Model {
-    int rad;
-}
-
-protocol Circle_Protocol implements Object {
-    (static void) self |> "hello";
-}
-
-object Circle implements Circle_Protocol(int rad) {
+object Circle implements Point(int rad) {
     fields {
-        implements Circle_Model;
+        // implements Circle_Model;
+        int rad;
     }
 
     init {
         self->rad = rad;
     }
 
-    supermessage "draw" |> {
+    (void) super |> "draw" |> {
         printf("circle at (%d, %d) rad: %d\n", super->x, super->y, self->rad);
     }
 
-    supermessage "move" |> {
+    (void) super |> "move" |> (int): dx, (int): dy |> {
         super->x += dx * 2;
         super->y += dy * 2;
     }
 
-    message "hello" |> {
+    (static void) self |> "hello" |> {
         printf("Hello from Circle class\n");
     }
 }

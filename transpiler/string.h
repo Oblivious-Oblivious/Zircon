@@ -10,6 +10,8 @@
 
 #include "vector.h"
 
+typedef char (*stringlambda)(char);
+
 /** The initial minimum size of a string **/
 static const size_t string_init_capacity = 32;
 
@@ -43,5 +45,6 @@ string *string_dup(string *sb);
 vector *string_split(string *str, string *delimeter);
 string *string_substring(string *str, size_t from, size_t __to);
 string *string_iterate(string *sb, lambda apply);
+string *string_map(string *sb, stringlambda modifier);
 
 #endif

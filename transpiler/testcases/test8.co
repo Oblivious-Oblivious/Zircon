@@ -1,3 +1,5 @@
+#import "Object"
+
 #include <stdio.h>
 
 model Composition_Model {
@@ -5,34 +7,37 @@ model Composition_Model {
     int b;
 }
 
-protocol Composition_Protocol implements Object {
-    (int) self |> "add";
-    (int) self |> "sub";
-    (int) self |> "mul";
-    (int) self |> "div";
-}
+// protocol Composition_Protocol implements Object {
+//     (int) self |> "add";
+//     (int) self |> "sub";
+//     (int) self |> "mul";
+//     (int) self |> "div";
+// }
 
-object Composition implements Composition_Protocol(int aValue, int bValue) {
+object Composition implements Object(int aValue, int bValue) {
     fields {
         /* Compose objects */
-        Composition_Model data1;
+        // Composition_Model data1;
+        implements Composition_Model;
     }
 
     init {
-        self->data1 = Composition_Model "new";
-        self->data1->a = aValue;
-        self->data2->b = bValue;
+        // self->data1 = Composition_Model "new";
+        // self->data1->a = aValue;
+        // self->data1->b = bValue;
+        self->a = aValue;
+        self->b = bValue;
     }
 
-    (void) self |> "set a" |> (int): a |> self->data1->a = a;
-    (void) self |> "set b" |> (int): b |> self->data1->b = b;
+    // (void) self |> "set a" |> (int): a |> self->data1->a = a;
+    // (void) self |> "set b" |> (int): b |> self->data1->b = b;
 
-    message "add" |> return data1->a + data1->b;
-    message "sub" |> return data1->a - data1->b;
-    message "mul" |> return data1->a * data1->b;
-    message "div" |> {
-        if(data1->b != 0)
-            return data1->a / data1->b;
+    (int) self |> "add" |> return self->a + self->b;
+    (int) self |> "sub" |> return self->a - self->b;
+    (int) self |> "mul" |> return self->a * self->b;
+    (int) self |> "div" |> {
+        if(self->b != 0)
+            return self->a / self->b;
         return -1;
     }
 
@@ -40,7 +45,7 @@ object Composition implements Composition_Protocol(int aValue, int bValue) {
 }
 
 int main(void) {
-    Composition obj = Composition "new" 2, 2;
+    void *obj = Composition "new" 2, 2;
     printf("%d\n", obj "add");
 
     obj "set a" 5;

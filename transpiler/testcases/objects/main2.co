@@ -1,0 +1,43 @@
+#import "Object"
+
+object Test implements Object((int): a, (int): b) {
+    fields {
+        int a;
+        int b;
+    }
+
+    init {
+        self->a = a;
+        self->b = b;
+    }
+
+    (int) self |> "get a" |> return self->a;
+    (void) self |> "set a" |> (int): a |> self->a = a;
+
+    (int) self |> "get b" |> return self->b;
+    (void) self |> "set b" |> (int): b |> self->b = b;
+
+    (int) self |> "add a and b" |> return self->a + self->b;
+
+    defer {
+        self->a = 0;
+        self->b = 0;
+    }
+}
+
+int main(void) {
+    void *t = Test "new" 2, 2;
+    int res1 = t "add a and b";
+    
+    t "set a" 5;
+    t "set b" 5;
+
+
+    int res2 = t "add a and b";
+    
+    t "set b" 2;
+
+    int res3 = res1 * res2 + t "get b";
+
+    printf("res: %d\n", res3);
+}
