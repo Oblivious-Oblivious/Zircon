@@ -1,9 +1,8 @@
 #import "Object"
 #import "Point"
 
-object Circle implements Point(int rad) {
+object Circle implements Point((int): rad) {
     fields {
-        // implements Circle_Model;
         int rad;
     }
 
@@ -20,7 +19,7 @@ object Circle implements Point(int rad) {
         super->y += dy * 2;
     }
 
-    (static void) self |> "hello" |> {
+    (void) self |> "hello" |> {
         printf("Hello from Circle class\n");
     }
 }

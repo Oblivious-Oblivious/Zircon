@@ -1,6 +1,6 @@
 #import "Object"
-// #import "Point"
-// #import "Circle"
+#import "Point"
+#import "Circle"
 
 object Any implements Object {
     fields {}
@@ -11,11 +11,11 @@ object Any implements Object {
 }
 
 /* For usage in many object calls */
-// static void draw_stuff(void *o) {
-//     o "draw";
-//     o "move" 10, 20;
-//     o "draw";
-// }
+static void draw_stuff(void *o) {
+    o "draw";
+    o "move" 10, 20;
+    o "draw";
+}
 
 void any(void) {
     void *o = Object "new";
@@ -39,16 +39,16 @@ int main(int argc, char **argv) {
     any();
     puts("");
 
-    // Point p = Point "new" 1, 2;
-    // Circle c = Circle "new" 2, 3, 5;
+    void *p = Point "new" 1, 2;
+    void *c = Circle "new" 2, 3, 5;
 
-    // draw_stuff(p);
-    // draw_stuff(c);
+    draw_stuff(p);
+    draw_stuff(c);
 
-    // c "hello";
+    c "hello";
 
-    // p "defer";
-    // c "defer";
+    p "defer";
+    c "defer";
 
     return 0;
 }

@@ -40,7 +40,7 @@ static char replace_spaces(char c) {
     vector *Vector;
 }
 
-%token OBJECT MODEL PROTOCOL INIT DEFER FIELDS IMPLEMENTS MESSAGE SUPERMESSAGE IMPORT
+%token OBJECT INIT DEFER FIELDS IMPLEMENTS IMPORT
 
 %token AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN FLOAT FOR GOTO IF INT LONG REGISTER RETURN SHORT SIGNED SIZEOF STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE
 %token BOOL COMPLEX IMAGINARY INLINE RESTRICT
@@ -76,11 +76,9 @@ static char replace_spaces(char c) {
 %type<String> block_item_list block_item expression_statement selection_statement iteration_statement jump_statement translation_unit
 %type<String> external_declaration function_definition declaration_list
 
-%type<String> model protocol object object_specifier self_or_super declaration_specifiers_or_pointer
-
-%type<Vector> abstract_message_declaration_list abstract_message_declaration model_declaration_list model_declaration
-%type<Vector> constructor_declaration destructor_declaration message_declaration_list message_declaration
-%type<Vector> object_declaration_list object_declaration fields_declaration object_parameter_type_list object_parameter_type
+%type<String> object object_specifier self_or_super declaration_specifiers_or_pointer
+%type<Vector> constructor_declaration destructor_declaration message_declaration_list message_declaration model_declaration_list
+%type<Vector> object_declaration_list object_declaration fields_declaration object_parameter_type_list object_parameter_type model_declaration
 
 %type<String> preprocessor_directive preprocessor_control_line preprocessor_constant_expression preprocessor_conditional
 %type<String> preprocessor_if_part preprocessor_elif_parts preprocessor_else_part preprocessor_if_line preprocessor_elif_line preprocessor_else_line
@@ -743,47 +741,7 @@ type_specifier:
     ;
 
 object_specifier:
-      model IDENTIFIER '{' model_declaration_list '}' {
-        $$ = new_string("");
-
-        hashmap *model_fields = new_hashmap();
-        int i;
-        for(i = 0; i < vector_length($4); i++) {
-            vector *current = vector_get($4, i);
-            /* And a hashmap entry with the variable name and
-                store the vector that describes the variable */
-            hashmap_add(model_fields, string_get(vector_get(current, 1)), current);
-        }
-        hashmap_add(models, string_get($2), model_fields);
-        if(hashmap_get(typedef_names, string_get($2)) == NULL)
-            hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
-        // if(hashmap_get(object_names, string_get($2)) == NULL)
-        //     hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
-    }
-    | protocol IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' abstract_message_declaration_list '}' {
-        $$ = new_string("");
-
-        // /* contains (superclass): string, and (messages): vector */
-        // vector *protocol_entry = new_vector();
-        // vector_add(protocol_entry, $4);
-
-        // hashmap *protocol_messages = new_hashmap();
-        // int i;
-        // for(i = 0; i < vector_length($6); i++) {
-        //     vector *current = vector_get($6, i);
-        //     /* Add a hashmap entry with the messsage name and 
-        //         store the vector that describes the message */
-        //     hashmap_add(protocol_messages, string_get(vector_get(current, 2)), current);
-        // }
-        // vector_add(protocol_entry, protocol_messages);
-
-        // hashmap_add(protocols, string_get($2), protocol_entry);
-        // if(hashmap_get(typedef_names, string_get($2)) == NULL)
-        //     hashmap_add(typedef_names, string_get(string_dup($2)), (void*)true);
-        // if(hashmap_get(object_names, string_get($2)) == NULL)
-        //     hashmap_add(object_names, string_get(string_dup($2)), (void*)true);
-    }
-    | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' object_declaration_list '}' {
+      object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' object_declaration_list '}' {
         $$ = new_string("");
 
         vector *object_entry = new_vector();
@@ -1799,38 +1757,6 @@ fields_declaration:
     }
     ;
 
-abstract_message_declaration_list:
-      abstract_message_declaration {
-        $$ = new_vector();
-        // vector_add($$, $1);
-    }
-    | abstract_message_declaration_list abstract_message_declaration {
-        $$ = new_vector();
-        // int i;
-        // for(i = 0; i < vector_length($1); i++)
-        //     vector_add($$, vector_get($1, i));
-        // vector_add($$, $2);
-    }
-    ;
-
-abstract_message_declaration:
-      '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING ';' {
-        $$ = new_vector();
-        // vector_add($$, $2); /* return value */
-        // vector_add($$, $4); /* sender */
-        // vector_add($$, $6); /* name */
-        // vector_add($$, new_string("")); /* parameter entries */
-        // vector_add($$, new_string("")); /* method block */
-    }
-    | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND parameter_type_list ';' {
-        $$ = new_vector();
-        // vector_add($$, $2); /* return value */
-        // vector_add($$, $4); /* sender */
-        // vector_add($$, $6); /* name */
-        // vector_add($$, $8); /* parameter entries */
-        // vector_add($$, new_string("")); /* method block */
-    }
-
 message_declaration_list:
       message_declaration {
         $$ = new_vector();
@@ -1931,18 +1857,6 @@ self_or_super:
             $$ = new_string("self ");
         else if(string_equals($1, new_string("super")))
             $$ = new_string("super ");
-    }
-    ;
-
-model:
-      MODEL {
-        $$ = new_string("model ");
-    }
-    ;
-
-protocol:
-      PROTOCOL {
-        $$ = new_string("protocol ");
     }
     ;
 

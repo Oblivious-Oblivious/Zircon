@@ -2,7 +2,6 @@
 
 object Point implements Object((int): x, (int): y) {
     fields {
-        // implements Point_Model;
         int x;
         int y;
     }

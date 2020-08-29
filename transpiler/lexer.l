@@ -53,16 +53,10 @@ int sym_type(char *identifier) {
 %%
 
 "object"                               tokenize(OBJECT);
-"model"                                tokenize(MODEL);
-"protocol"                             tokenize(PROTOCOL);
-
 "init"                                 tokenize(INIT);
 "defer"                                tokenize(DEFER);
 "fields"                               tokenize(FIELDS);
-
 "implements"                           tokenize(IMPLEMENTS);
-"message"                              tokenize(MESSAGE);
-"supermessage"                         tokenize(SUPERMESSAGE);
 
 "auto"                                 tokenize(AUTO);
 "break"                                tokenize(BREAK);

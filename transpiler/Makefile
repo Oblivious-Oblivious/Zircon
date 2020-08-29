@@ -26,7 +26,7 @@ bison:
 compiler: flex bison
 	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
 	cp a.out testcases/compiler
-	./a.out testcases/objects/main.co
+	./a.out testcases/objects/main2.co
 	gcc out.c -o out
 	./out
 
