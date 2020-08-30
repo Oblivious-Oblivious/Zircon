@@ -1,14 +1,12 @@
-#include "syntaxme.h"
+#include <string.h>
 
-model Point_Protocol {
-    double x;
-    double y;
-}
+@import "Object"
 
 object Point implements Object(double x, double y) {
     fields {
         char *name;
-        implements Point_Protocol;
+        double x;
+        double y;
     }
 
     init {
@@ -17,16 +15,16 @@ object Point implements Object(double x, double y) {
         self->y = y;
     }
 
-    (Point@) self |> "+" |> (Point@): other |> {
+    (void*) self |> "+" |> (void*): other |> {
         return Point "new" self->x + other->x, self->y + other->y;
     }
-    (Point@) self |> "-" |> (Point@): other |> {
+    (void*) self |> "-" |> (void*): other |> {
         return Point "new" self->x - other->x, self->y - other->y;
     }
-    (Point@) self |> "*" |> (Point@): other |> {
+    (void*) self |> "*" |> (void*): other |> {
         return Point "new" self->x * other->x, self->y * other->y;
     }
-    (Point@) self |> "/" |> (Point@): other |> {
+    (void*) self |> "/" |> (void*): other |> {
         if(other->x != 0 && other->y != 0)
             return Point "new" self->x / other->x, self->y / other->y;
         return NULL;
@@ -34,7 +32,9 @@ object Point implements Object(double x, double y) {
     }
 
     (char*) self |> "to string" |> {
-        return format("P(%g, %g)", self->x, self->y);
+        char buf[1024];
+        sprintf(buf, "P(%g, %g)", self->x, self->y);
+        return buf;
     }
 
     defer {

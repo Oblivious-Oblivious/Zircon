@@ -1,36 +1,40 @@
-#include "syntaxme.h"
+@import "Object"
 
-object Object implements Object_Model {
+object Object implements Object {
     fields {
-        implements Object_Data;
+        unsigned long id;
+        char *class;
+        void *superclass;
+        size_t size;
     }
 
     /* Alias for new */
     /* init({}); */
 
-    message "id" |> {
+    (unsigned long) self |> "id" |> {
         return self->id;
     }
 
-    message "class" |> {
+    (void*) self |> "class" |> {
         return self;
     }
 
-    message "superclass" |> {
-        return self->super;
+    (void*) self |> "superclass" |> {
+        return self->superclass;
     }
 
-    message "size" |> {
+    (size_t) self |> "size" |> {
         return self->size;
     }
 
-    message "is a" |> {
+    /*********************************************/
+    (bool) self |> "is a" |> (void*): class |> {
         return strcmp(self->class, class->class);
     }
 
     /* TODO TODO */
     /*
-    message "is of" |> {
+    (bool) self |> "is of" |> (void*): class |> {
         while(!(self "equal" class)) {
             if()
             class = class "superclass";
@@ -38,41 +42,42 @@ object Object implements Object_Model {
         return true;
     }
     */
+   /*********************************************/
 
-    message "responds to" |> {
+    (bool) self |> "responds to" |> (char*): message |> {
         return __class_contains_message(message);
     }
 
-    message "new" |> {
+    (void*) self |> "new" (va_list*): argv |> {
         return self "class" "alloc" "init" argv;
     }
 
-    message "alloc" |> {
+    (void*) self |> "alloc" |> {
         return malloc(sizeof(self "class"));
     }
 
-    message "init" |> {
+    (void*) self |> "init" |> (va_list*): argv |> {
         __generate_id();
         __generate_class_name();
         __generate_superclass(self);
         __generate_defaults(argv);
     }
     
-    message "==" |> {
+    (bool) self |> "==" |> (void*): other |> {
         return self->id == other->id;
     }
 
-    message "!=" |> {
+    (bool) self |> "!=" |> (void*): other |> {
         return self->id != other->id;
     }
 
-    message "equal" {
+    (bool) self |> "equal" |> (void*): other |> {
         /*** TODO USE COMPILER FUNCTION ***/
         return self "is a" other;
         /**********************************/
     }
 
-    message "to string" |> {
+    (char*) self |> "to string" |> {
         string *__ret_value = new_string("");
         string_add_int(__ret_value, self->id);
         string_add_char(__ret_value, '@');

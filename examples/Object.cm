@@ -1,8 +1,0 @@
-#include "syntaxme.h"
-
-model Object_Data {
-    unsigned long id;
-    char *class;
-    Object @super;
-    size_t size;
-}
