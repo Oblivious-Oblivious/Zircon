@@ -15,6 +15,7 @@ void yyerror(char*);
 
 /* Result of the parsed file */
 string *translation;
+string *filename;
 bool main_flag = false;
 
 /* Hashmaps containing special identifiers */
@@ -23,8 +24,6 @@ hashmap *object_names;
 hashmap *enum_constants;
 
 /****/
-hashmap *models;
-hashmap *protocols;
 hashmap *objects;
 /****/
 
@@ -80,8 +79,7 @@ static char replace_spaces(char c) {
 %type<Vector> constructor_declaration destructor_declaration message_declaration_list message_declaration model_declaration_list
 %type<Vector> object_declaration_list object_declaration fields_declaration object_parameter_type_list object_parameter_type model_declaration
 
-%type<String> preprocessor_directive preprocessor_control_line preprocessor_constant_expression preprocessor_conditional
-%type<String> preprocessor_if_part preprocessor_elif_parts preprocessor_else_part preprocessor_if_line preprocessor_elif_line preprocessor_else_line
+%type<String> import_directive
 
 %start translation_unit
 %%
@@ -743,6 +741,10 @@ type_specifier:
 object_specifier:
       object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '{' object_declaration_list '}' {
         $$ = new_string("");
+        main_flag = false;
+
+        filename = string_dup($2);
+        string_add_str(filename, ".h");
 
         vector *object_entry = new_vector();
         hashmap *object_fields = new_hashmap();
@@ -1215,8 +1217,11 @@ object_specifier:
         string_add_str($$, "#endif\n\n");
     }
     | object IDENTIFIER IMPLEMENTS TYPEDEF_NAME '(' object_parameter_type_list ')' '{' object_declaration_list '}' {
-        /* TODO -> USE STACK TO SAVE OBJECT NAMES */
         $$ = new_string("");
+        main_flag = false;
+
+        filename = string_dup($2);
+        string_add_str(filename, ".h");
 
         vector *object_entry = new_vector();
         hashmap *object_fields = new_hashmap();
@@ -1724,32 +1729,6 @@ fields_declaration:
       FIELDS '{' '}' {
         $$ = new_vector();
         vector_add($$, new_vector());
-    }
-    | FIELDS '{' IMPLEMENTS TYPEDEF_NAME ';' '}' {
-        /* TODO -> ADDED HERE */
-        $$ = new_vector();
-        vector *current_fields = new_vector();
-
-        hashmap *current_model = hashmap_get(models, string_get($4));
-        int i;
-        for(i = 0; i < current_model->alloced; i++)
-            if(current_model->data[i].in_use != 0)
-                vector_add(current_fields, current_model->data[i].data);
-        
-        vector_add($$, current_fields);
-    }
-    | FIELDS '{' IMPLEMENTS TYPEDEF_NAME ';' model_declaration_list '}' {
-        /* TODO -> ADDED HERE */
-        $$ = new_vector();
-
-        hashmap *current_model = hashmap_get(models, string_get($4));
-        int i;
-        for(i = 0; i < current_model->alloced; i++)
-            if(current_model->data[i].in_use != 0) {
-                vector_add($6, current_model->data[i].data);
-            }
-        
-        vector_add($$, $6);
     }
     | FIELDS '{' model_declaration_list '}' {
         $$ = new_vector();
@@ -2696,7 +2675,7 @@ translation_unit:
     ;
 
 external_declaration:
-      preprocessor_directive {
+      import_directive {
         $$ = string_dup($1);
     }
     | function_definition {
@@ -2757,59 +2736,8 @@ declaration_list:
     }
     ;
 
-preprocessor_directive:
-      preprocessor_conditional {
-        $$ = string_dup($1);
-    }
-    | preprocessor_control_line {
-        $$ = string_dup($1);
-    }
-    | preprocessor_constant_expression {
-        $$ = string_dup($1);
-    }
-    ;
-
-preprocessor_control_line:
-      DEFINE IDENTIFIER STRING {
-        $$ = new_string("\n#define ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-        string_add_str($$, string_get($3));
-        string_add_char($$, ' ');
-    }
-    | DEFINE IDENTIFIER {
-        $$ = new_string("\n#define ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-    }
-    | DEFINE IDENTIFIER declaration_list STRING {
-        $$ = new_string("\n#define ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-        string_add_str($$, string_get($3));
-        string_add_char($$, ' ');
-        string_add_str($$, string_get($4));
-        string_add_char($$, ' ');
-    }
-    | DEFINE IDENTIFIER declaration_list {
-        $$ = new_string("\n#define ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-        string_add_str($$, string_get($3));
-        string_add_char($$, ' ');
-    }
-    | INCLUDE '<' HEADER '>' {
-        $$ = new_string("\n#include <");
-        string_add_str($$, string_get($3));
-        string_add_str($$, ">\n");
-    }
-    | INCLUDE STRING {
-        $$ = new_string("\n#include ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, '\n');
-        /* Newline is added on the string */
-    }
-    | IMPORT STRING {
+import_directive:
+      IMPORT STRING {
         /* TODO -> ADDED HERE */
         string *import_value = new_string("");
         string_add_str(import_value, string_get($2));
@@ -2827,136 +2755,10 @@ preprocessor_control_line:
         /* Add a `.h` */
         string_add_str(import_value, ".h");
 
-        $$ = new_string("");
-        // $$ = new_string("\n#include \"");
-        // string_add_str($$, string_get(import_value));
-        // string_add_str($$, "\"\n");
+        $$ = new_string("\n#include \"");
+        string_add_str($$, string_get(import_value));
+        string_add_str($$, "\"\n");
     }
-    | LINE INT_CONSTANT {
-        $$ = new_string("\n#line ");
-        string_add_str($$, string_get($2));
-    }
-    | LINE INT_CONSTANT HEADER {
-        $$ = new_string("\n#line ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-        string_add_str($$, string_get($3));
-    }
-    | UNDEF IDENTIFIER {
-        $$ = new_string("\n#undef ");
-        string_add_str($$, string_get($2));
-    }
-    | ERROR STRING {
-        $$ = new_string("\n#error ");
-        string_add_str($$, string_get($2));
-    }
-    | WARNING STRING {
-        $$ = new_string("\n#warning ");
-        string_add_str($$, string_get($2));
-    }
-    | PRAGMA STRING {
-        $$ = new_string("\n#pragma ");
-        string_add_str($$, string_get($2));
-    }
-    ;
-
-preprocessor_constant_expression:
-      DEFINED '(' IDENTIFIER ')' {
-        $$ = new_string("defined(");
-        string_add_str($$, string_get($3));
-        string_add_char($$, '\n');
-    }
-    | DEFINED IDENTIFIER {
-        $$ = new_string("defined ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, '\n');
-    }
-    | constant_expression {
-        $$ = string_dup($1);
-        string_add_char($$, '\n');
-    }
-    ;
-
-preprocessor_conditional:
-      preprocessor_if_part ENDIF {
-        $$ = string_dup($1);
-        string_add_str($$, "\n#endif\n");
-    }
-    | preprocessor_if_part preprocessor_elif_parts preprocessor_else_part ENDIF {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, string_get($3));
-        string_add_str($$, "\n#endif\n");
-    }
-    | preprocessor_if_part preprocessor_else_part ENDIF {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, "\n#endif\n");
-    }
-    ;
-
-preprocessor_if_line:
-      PRE_IF constant_expression {
-        $$ = new_string("\n#if ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-    }
-    | IFDEF IDENTIFIER {
-        $$ = new_string("\n#ifdef ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-    }
-    | IFNDEF IDENTIFIER {
-        $$ = new_string("\n#ifndef ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-    }
-    ;
-
-preprocessor_elif_line:
-      PRE_ELIF constant_expression {
-        $$ = new_string("\n#elif ");
-        string_add_str($$, string_get($2));
-        string_add_char($$, ' ');
-    }
-    ;
-
-preprocessor_else_line:
-      PRE_ELSE {
-        $$ = new_string("\n#else\n");
-        string_add_char($$, ' ');
-    }
-    ;
-
-preprocessor_if_part:
-      preprocessor_if_line translation_unit {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_char($$, '\n');
-    }
-    ;
-
-preprocessor_elif_parts:
-      preprocessor_elif_line translation_unit {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_char($$, '\n');
-    }
-    | preprocessor_elif_parts preprocessor_elif_line translation_unit {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_str($$, string_get($3));
-        string_add_char($$, '\n');
-    }
-    ;
-
-preprocessor_else_part:
-      preprocessor_else_line translation_unit {
-        $$ = string_dup($1);
-        string_add_str($$, string_get($2));
-        string_add_char($$, '\n');
-    }
-    ;
 
 %%
 
@@ -3204,12 +3006,6 @@ static void __setup_initial_object(void) {
 }
 
 void __setup_objects(void) {
-    /* store variable entries -> (vector) */
-    models = new_hashmap();
-
-    /* store message entries -> (vector) */
-    protocols = new_hashmap();
-
     /* store vectors of fields parameters and messages */
     objects = new_hashmap();
 }
@@ -3228,26 +3024,19 @@ void __setup_init_objects(void) {
     string_add_str(translation, "}\n");
 }
 
+/**/
 static void display_strings(char *item) {
     printf("\t%s\n", item);
 }
 static void display_hashmap(hashmap *map) {
     hashmap_map(map, (lambda)display_strings, KEYS);
 }
+/**/
 
 /**/
 static void display_entry(vector *entry) {
     printf("\033[1;36mentry\033[0m: `(%s): %s`\n", string_get(vector_get(entry, 0)), string_get(vector_get(entry, 1)));
 }
-static void display_hashmap_of_entries(hashmap *variable_entries) {
-    hashmap_map(variable_entries, (lambda)display_entry, VALUES);
-}
-static void iterate_on_models(void) {
-    hashmap_map(models, (lambda)display_hashmap_of_entries, VALUES);
-}
-/**/
-
-/**/
 static void display_message(vector *message) {
     int i;
     string *params = new_string("");
@@ -3265,16 +3054,6 @@ static void display_message(vector *message) {
         string_get(params),
         string_get(vector_get(message, 4)));
 }
-/* static void display_hashmap_of_messages(vector *protocol_data) {
-    hashmap *messages = vector_get(protocol_data, 1);
-    hashmap_map(messages, (lambda)display_message, VALUES);
-}
-static void iterate_on_protocols(void) {
-    hashmap_map(protocols, (lambda)display_hashmap_of_messages, VALUES);
-} */
-/**/
-
-/**/
 static void display_hashmap_of_objects(vector *object_vector) {
     vector *object_data = vector_get(object_vector, 1); /* 0th is name of super */
     printf("\t\033[38;5;78mfields\033[0m\n");
@@ -3290,44 +3069,44 @@ static void iterate_on_objects(void) {
 /**/
 
 int main(int argc, char **argv) {
-    assert(argc == 2 && argv && argv[1]);
-
-    yyin = fopen(argv[1], "r");
-    translation = new_string("");
     __setup_hashmaps();
     __setup_objects();
     /**/
     hashmap_add(typedef_names, "size_t", (void*)true);
     hashmap_add(typedef_names, "bool", (void*)true);
     /**/
-
-    /* Write the initial `object.h` */
+    
+    /* Write the initial `Object.h` */
     __setup_initial_object();
 
-    /* Parse the text */
-    yyparse();
-    /******************/
+    /********************************/
+    int i;
+    for(i = 1; i < argc; i++) {
+        yyin = fopen(argv[i], "r");
+        translation = new_string("");
 
-    /* Write the init nodes */
-    if(main_flag) __setup_init_objects();
+        /* Parse the text */
+        yyparse();
 
-/* printf("\n\033[38;5;207mtypedef_names\033[0m\n");
-display_hashmap(typedef_names);
-printf("\n\033[38;5;207menum_constants\033[0m\n");
-display_hashmap(enum_constants);
-printf("\n\033[38;5;207mobject_names\033[0m\n");
-display_hashmap(object_names); */
-
-/* printf("\n\033[38;5;207mmodels\033[0m\n");
-iterate_on_models();
-printf("\n\033[38;5;207mprotocols\033[0m\n");
-iterate_on_protocols();
-printf("\n\033[38;5;207mobjects\033[0m\n");
-iterate_on_objects(); */
-
+        /* Write the init nodes */
+        if(main_flag) {
+            __setup_init_objects();
+            filename = new_string(argv[i]);
+            string_shorten(filename, string_length(filename) - 1);
+        }
+        FILE *fp = fopen(string_get(filename), "w");
+        fprintf(fp, "%s", string_get(translation));
+        fclose(fp);
+    }
     /*********************************/
-    FILE *fp = fopen("out.c", "w");
-    fprintf(fp, "%s", string_get(translation));
-    fclose(fp);
-    /*********************************/
+
+    /* printf("\n\033[38;5;207mtypedef_names\033[0m\n");
+    display_hashmap(typedef_names);
+    printf("\n\033[38;5;207menum_constants\033[0m\n");
+    display_hashmap(enum_constants);
+    printf("\n\033[38;5;207mobject_names\033[0m\n");
+    display_hashmap(object_names); */
+
+    /* printf("\n\033[38;5;207mobjects\033[0m\n");
+    iterate_on_objects(); */
 }

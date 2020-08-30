@@ -1,4 +1,4 @@
-#import "Object"
+@import "Object"
 
 object Point implements Object((int): x, (int): y) {
     fields {
