@@ -1,8 +1,8 @@
 #include <string.h>
 
-@import "Object"
+#import "Object"
 
-object Point implements Object(double x, double y) {
+object Point2 implements Object((double): x, (double): y) {
     fields {
         char *name;
         double x;
@@ -16,17 +16,17 @@ object Point implements Object(double x, double y) {
     }
 
     (void*) self |> "+" |> (void*): other |> {
-        return Point "new" self->x + other->x, self->y + other->y;
+        return Point2 "new" self->x + other->x, self->y + other->y;
     }
     (void*) self |> "-" |> (void*): other |> {
-        return Point "new" self->x - other->x, self->y - other->y;
+        return Point2 "new" self->x - other->x, self->y - other->y;
     }
     (void*) self |> "*" |> (void*): other |> {
-        return Point "new" self->x * other->x, self->y * other->y;
+        return Point2 "new" self->x * other->x, self->y * other->y;
     }
     (void*) self |> "/" |> (void*): other |> {
         if(other->x != 0 && other->y != 0)
-            return Point "new" self->x / other->x, self->y / other->y;
+            return Point2 "new" self->x / other->x, self->y / other->y;
         return NULL;
         // return self;
     }
