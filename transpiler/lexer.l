@@ -176,9 +176,25 @@ int sym_type(char *identifier) {
 }
 "//".*                                 ;
 
-"@import"                              tokenize(IMPORT);
+"#import"                              tokenize(IMPORT);
 
-"#".*                                  ;
+"#define"                              tokenize(DEFINE);
+"#include"                             tokenize(INCLUDE);
+"#ifdef"                               tokenize(IFDEF);
+"#undef"                               tokenize(UNDEF);
+"#ifndef"                              tokenize(IFNDEF);
+"#if"                                  tokenize(PRE_IF);
+"#elif"                                tokenize(PRE_ELIF);
+"#else"                                tokenize(PRE_ELSE);
+"#endif"                               tokenize(ENDIF);
+"#error"                               tokenize(ERROR);
+"#warning"                             tokenize(WARNING);
+"#pragma"                              tokenize(PRAGMA);
+"#line"                                tokenize(LINE);
+"#"                                    tokenize('#');
+"##"                                   tokenize(PRE_CONC);
+
+"defined"                              tokenize(DEFINED);
 
 {L}{A}*                                return tokenize_type();
 {L}{AD}*                               tokenize(HEADER);

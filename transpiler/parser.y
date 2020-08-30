@@ -79,7 +79,8 @@ static char replace_spaces(char c) {
 %type<Vector> constructor_declaration destructor_declaration message_declaration_list message_declaration model_declaration_list
 %type<Vector> object_declaration_list object_declaration fields_declaration object_parameter_type_list object_parameter_type model_declaration
 
-%type<String> import_directive
+%type<String> preprocessor_directive preprocessor_control_line preprocessor_constant_expression preprocessor_conditional preprocessor_if_line
+%type<String> preprocessor_elif_line preprocessor_else_line preprocessor_if_part preprocessor_elif_parts preprocessor_else_part
 
 %start translation_unit
 %%
@@ -2675,7 +2676,7 @@ translation_unit:
     ;
 
 external_declaration:
-      import_directive {
+      preprocessor_directive {
         $$ = string_dup($1);
     }
     | function_definition {
@@ -2686,6 +2687,206 @@ external_declaration:
     }
     | object_specifier {
         $$ = string_dup($1);
+    }
+    ;
+
+preprocessor_directive:
+      preprocessor_conditional {
+        $$ = string_dup($1);
+    }
+    | preprocessor_control_line {
+        $$ = string_dup($1);
+    }
+    | preprocessor_constant_expression {
+        $$ = string_dup($1);
+    }
+    ;
+
+preprocessor_control_line:
+      DEFINE IDENTIFIER STRING {
+        $$ = new_string("\n#define ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($3));
+        string_add_char($$, ' ');
+    }
+    | DEFINE IDENTIFIER {
+        $$ = new_string("\n#define ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+    }
+    | DEFINE IDENTIFIER declaration_list STRING {
+        $$ = new_string("\n#define ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($3));
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($4));
+        string_add_char($$, ' ');
+    }
+    | DEFINE IDENTIFIER declaration_list {
+        $$ = new_string("\n#define ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($3));
+        string_add_char($$, ' ');
+    }
+    | INCLUDE '<' HEADER '>' {
+        $$ = new_string("\n#include <");
+        string_add_str($$, string_get($3));
+        string_add_str($$, ">\n");
+    }
+    | INCLUDE STRING {
+        $$ = new_string("\n#include ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, '\n');
+        /* Newline is added on the string */
+    }
+    | IMPORT STRING {
+        /* TODO -> ADDED HERE */
+        string *import_value = new_string("");
+        string_add_str(import_value, string_get($2));
+
+        /* Remove quotations */
+        string_skip(import_value, 1);
+        string_shorten(import_value, string_length(import_value) - 1);
+
+        /* Add to object names */
+        if(hashmap_get(typedef_names, string_get(import_value)) == NULL)
+            hashmap_add(typedef_names, string_get(string_dup(import_value)), (void*)true);
+        if(hashmap_get(object_names, string_get(import_value)) == NULL)
+            hashmap_add(object_names, string_get(string_dup(import_value)), (void*)true);
+
+        /* Add a `.h` */
+        string_add_str(import_value, ".h");
+
+        $$ = new_string("\n#include \"");
+        string_add_str($$, string_get(import_value));
+        string_add_str($$, "\"\n");
+    }
+    | LINE INT_CONSTANT {
+        $$ = new_string("\n#line ");
+        string_add_str($$, string_get($2));
+    }
+    | LINE INT_CONSTANT HEADER {
+        $$ = new_string("\n#line ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+        string_add_str($$, string_get($3));
+    }
+    | UNDEF IDENTIFIER {
+        $$ = new_string("\n#undef ");
+        string_add_str($$, string_get($2));
+    }
+    | ERROR STRING {
+        $$ = new_string("\n#error ");
+        string_add_str($$, string_get($2));
+    }
+    | WARNING STRING {
+        $$ = new_string("\n#warning ");
+        string_add_str($$, string_get($2));
+    }
+    | PRAGMA STRING {
+        $$ = new_string("\n#pragma ");
+        string_add_str($$, string_get($2));
+    }
+    ;
+
+preprocessor_constant_expression:
+      DEFINED '(' IDENTIFIER ')' {
+        $$ = new_string("defined(");
+        string_add_str($$, string_get($3));
+        string_add_char($$, '\n');
+    }
+    | DEFINED IDENTIFIER {
+        $$ = new_string("defined ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, '\n');
+    }
+    | constant_expression {
+        $$ = string_dup($1);
+        string_add_char($$, '\n');
+    }
+    ;
+
+preprocessor_conditional:
+      preprocessor_if_part ENDIF {
+        $$ = string_dup($1);
+        string_add_str($$, "\n#endif\n");
+    }
+    | preprocessor_if_part preprocessor_elif_parts preprocessor_else_part ENDIF {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_str($$, string_get($3));
+        string_add_str($$, "\n#endif\n");
+    }
+    | preprocessor_if_part preprocessor_else_part ENDIF {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_str($$, "\n#endif\n");
+    }
+    ;
+
+preprocessor_if_line:
+      PRE_IF constant_expression {
+        $$ = new_string("\n#if ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+    }
+    | IFDEF IDENTIFIER {
+        $$ = new_string("\n#ifdef ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+    }
+    | IFNDEF IDENTIFIER {
+        $$ = new_string("\n#ifndef ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+    }
+    ;
+
+preprocessor_elif_line:
+      PRE_ELIF constant_expression {
+        $$ = new_string("\n#elif ");
+        string_add_str($$, string_get($2));
+        string_add_char($$, ' ');
+    }
+    ;
+
+preprocessor_else_line:
+      PRE_ELSE {
+        $$ = new_string("\n#else\n");
+        string_add_char($$, ' ');
+    }
+    ;
+
+preprocessor_if_part:
+      preprocessor_if_line translation_unit {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_char($$, '\n');
+    }
+    ;
+
+preprocessor_elif_parts:
+      preprocessor_elif_line translation_unit {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_char($$, '\n');
+    }
+    | preprocessor_elif_parts preprocessor_elif_line translation_unit {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_str($$, string_get($3));
+        string_add_char($$, '\n');
+    }
+    ;
+
+preprocessor_else_part:
+      preprocessor_else_line translation_unit {
+        $$ = string_dup($1);
+        string_add_str($$, string_get($2));
+        string_add_char($$, '\n');
     }
     ;
 
@@ -2736,30 +2937,6 @@ declaration_list:
     }
     ;
 
-import_directive:
-      IMPORT STRING {
-        /* TODO -> ADDED HERE */
-        string *import_value = new_string("");
-        string_add_str(import_value, string_get($2));
-
-        /* Remove quotations */
-        string_skip(import_value, 1);
-        string_shorten(import_value, string_length(import_value) - 1);
-
-        /* Add to object names */
-        if(hashmap_get(typedef_names, string_get(import_value)) == NULL)
-            hashmap_add(typedef_names, string_get(string_dup(import_value)), (void*)true);
-        if(hashmap_get(object_names, string_get(import_value)) == NULL)
-            hashmap_add(object_names, string_get(string_dup(import_value)), (void*)true);
-
-        /* Add a `.h` */
-        string_add_str(import_value, ".h");
-
-        $$ = new_string("\n#include \"");
-        string_add_str($$, string_get(import_value));
-        string_add_str($$, "\"\n");
-    }
-
 %%
 
 extern FILE *yyin;
@@ -2773,6 +2950,7 @@ void yyerror(char *s) {
     fflush(stdout);
     warning(s, (char*)0);
     printf("`%s`\n", string_get(translation));
+    /* exit(1); */
     /* yyparse(); */
 }
 
@@ -3081,9 +3259,12 @@ int main(int argc, char **argv) {
 
     /********************************/
     int i;
+    FILE *fp;
     for(i = 1; i < argc; i++) {
+        printf("Compiling: %s\n", argv[i]);
         yyin = fopen(argv[i], "r");
         translation = new_string("");
+        main_flag = false;
 
         /* Parse the text */
         yyparse();
@@ -3094,9 +3275,15 @@ int main(int argc, char **argv) {
             filename = new_string(argv[i]);
             string_shorten(filename, string_length(filename) - 1);
         }
-        FILE *fp = fopen(string_get(filename), "w");
+        fp = fopen(string_get(filename), "w");
         fprintf(fp, "%s", string_get(translation));
         fclose(fp);
+        printf("\n\033[38;5;207mtypedef_names\033[0m\n");
+    display_hashmap(typedef_names);
+    printf("\n\033[38;5;207menum_constants\033[0m\n");
+    display_hashmap(enum_constants);
+    printf("\n\033[38;5;207mobject_names\033[0m\n");
+    display_hashmap(object_names);
     }
     /*********************************/
 

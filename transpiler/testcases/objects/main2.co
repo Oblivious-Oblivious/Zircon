@@ -1,4 +1,4 @@
-@import "Object"
+#import "Object"
 
 object Test implements Object((int): a, (int): b) {
     fields {

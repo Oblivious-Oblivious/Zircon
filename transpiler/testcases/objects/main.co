@@ -1,6 +1,6 @@
-@import "Object"
-@import "Point"
-@import "Circle"
+#import "Object"
+#import "Point"
+#import "Circle"
 
 object Any implements Object {
     fields {}
