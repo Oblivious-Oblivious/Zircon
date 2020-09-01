@@ -2,10 +2,10 @@
 
 #include <stdlib.h>
 
-model TestModel {
-    int a;
-    int b;
-}
+// model TestModel {
+//     int a;
+//     int b;
+// }
 
 // protocol TestProtocol implements Object {
 //     (void) self |> "test abstract no param";
@@ -15,7 +15,9 @@ model TestModel {
 object Test implements Object(int aValue, int bValue) {
     fields {
         // TestModel data1;
-        implements TestModel;
+        // implements TestModel;
+        int a;
+        int b;
     }
 
     init {
