@@ -1,4 +1,4 @@
-@import "Object"
+#import "Object"
 
 object Object implements Object {
     fields {
