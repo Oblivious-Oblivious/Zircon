@@ -8,24 +8,26 @@ struct Data {
 /* Inherit behaviour */
 object Composition implements Object((int): aValue, (int): bValue) {
     fields {
-        struct Data data1;
+        // struct Data data1;
+        int a;
+        int b;
     }
 
     init {
-        self->data1 = (struct Data*)malloc(sizeof(Data));
-        self->data1->a = aValue;
-        self->data1->b = bValue;
+        // self->data1 = (Data*)malloc(sizeof(Data));
+        self->a = aValue;
+        self->b = bValue;
     }
 
-    (void) self |> "set a" |> (int): a |> self->data1->a = a;
-    (void) self |> "set b" |> (int): b |> self->data1->b = b;
+    (void) self |> "set a" |> (int): a |> self->a = a;
+    (void) self |> "set b" |> (int): b |> self->b = b;
 
-    (int) self |> "add" |> return self->data1->a + self->data1->b;
-    (int) self |> "sub" |> return self->data1->a - self->data1->b;
-    (int) self |> "mul" |> return self->data1->a * self->data1->b;
+    (int) self |> "add" |> return self->a + self->b;
+    (int) self |> "sub" |> return self->a - self->b;
+    (int) self |> "mul" |> return self->a * self->b;
     (int) self |> "div" |> {
-        if(self->data1->b != 0)
-            return self->data1->a / self->data1->b;
+        if(self->b != 0)
+            return self->a / self->b;
         return -1;
     }
     
@@ -33,7 +35,7 @@ object Composition implements Object((int): aValue, (int): bValue) {
 }
 
 int main(void) {
-    Composition obj = Composition "new" 2, 2;
+    void *obj = Composition "new" 2, 2;
     printf("%d\n", obj "add"); /* `4` */
 
     obj "set a" 5;

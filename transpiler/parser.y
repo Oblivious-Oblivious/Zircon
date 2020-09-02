@@ -195,6 +195,9 @@ postfix_expression:
         /* Turn into an identifier */
         $2 = new_string(string_identifier($2));
 
+        /* Add an identifier to avoid name collisions */
+        string_add_str($$, "zircon_");
+
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
         string_add_str($$, string_get($1));
@@ -213,6 +216,9 @@ postfix_expression:
         /* Turn into an identifier */
         $2 = new_string(string_identifier($2));
 
+        /* Add an identifier to avoid name collisions */
+        string_add_str($$, "zircon_");
+
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
         string_add_str($$, string_get($1));
@@ -228,6 +234,9 @@ postfix_expression:
 
         /* Turn into an identifier */
         $2 = new_string(string_identifier($2));
+
+        /* Add an identifier to avoid name collisions */
+        string_add_str($$, "zircon_");
 
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
@@ -246,6 +255,9 @@ postfix_expression:
 
         /* Turn into an identifier */
         $2 = new_string(string_identifier($2));
+
+        /* Add an identifier to avoid name collisions */
+        string_add_str($$, "zircon_");
 
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
@@ -863,6 +875,10 @@ object_specifier:
                 && !string_equals(vector_get(message, 1), new_string("super "))) {
                     /* Write base call */
                     string_add_str($$, string_get(vector_get(message, 0)));
+
+                    /* Add an identifier to avoid name collisions */
+                    string_add_str($$, "zircon_");
+
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
                         string_add_str($$, "(const void *_self");
@@ -900,6 +916,10 @@ object_specifier:
 
                     /* Write super call */
                     string_add_str($$, string_get(vector_get(message, 0)));
+                    
+                    /* Add an identifier to avoid name collisions */
+                    string_add_str($$, "zircon_");
+
                     string_add_str($$, "super_");
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
@@ -958,7 +978,7 @@ object_specifier:
             string_add_str($$, "_ctor(void *_self, va_list *app) {\n");
             string_add_str($$, "    struct ");
             string_add_str($$, string_get($2));
-            string_add_str($$, " *self = super_ctor(");
+            string_add_str($$, " *self = zircon_super_ctor(");
             string_add_str($$, string_get($2));
             string_add_str($$, ", _self, app);\n\n");
 
@@ -974,7 +994,7 @@ object_specifier:
             string_add_str($$, "_dtor(void *_self) {\n");
             string_add_str($$, "    struct ");
             string_add_str($$, string_get($2));
-            string_add_str($$, " *self = super_dtor(");
+            string_add_str($$, " *self = zircon_super_dtor(");
             string_add_str($$, string_get($2));
             string_add_str($$, ", _self);\n\n");
             string_add_str($$, string_get(method_on_defer));
@@ -1023,7 +1043,7 @@ object_specifier:
             string_add_str($$, "Class_ctor(void *_self, va_list *app) {\n");
             string_add_str($$, "    struct ");
             string_add_str($$, string_get($2));
-            string_add_str($$, "Class *self = super_ctor(");
+            string_add_str($$, "Class *self = zircon_super_ctor(");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class, _self, app);\n\n");
             string_add_str($$, "    typedef void (*voidf)();\n");
@@ -1043,6 +1063,10 @@ object_specifier:
                 || string_equals(vector_get(message, 1), new_string("super ")))
                     continue;
                 string_add_str($$, "        if(selector == (voidf)");
+
+                /* Add an identifier to avoid name collisions */
+                string_add_str($$, "zircon_");
+
                 string_add_str($$, string_get(vector_get(message, 2)));
                 string_add_str($$, ")\n");
                 string_add_str($$, "            *(voidf*)&self->");
@@ -1072,7 +1096,7 @@ object_specifier:
             string_add_str($$, string_get($2));
             string_add_str($$, "Class) ");
             string_add_str($$, string_get($2));
-            string_add_str($$, "Class = new(");
+            string_add_str($$, "Class = zircon_new(");
             string_add_str($$, "Class,\n");
             string_add_char($$, '\"');
             string_add_str($$, string_get($2));
@@ -1086,7 +1110,7 @@ object_specifier:
             string_add_str($$, "sizeof(struct ");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class),\n");
-            string_add_str($$, "ctor, ");
+            string_add_str($$, "zircon_ctor, ");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class_ctor,\n");
             string_add_str($$, "0);\n");
@@ -1095,7 +1119,7 @@ object_specifier:
             string_add_str($$, string_get($2));
             string_add_str($$, ") ");
             string_add_str($$, string_get($2));
-            string_add_str($$, " = new(\n");
+            string_add_str($$, " = zircon_new(\n");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class,\n");
             string_add_char($$, '\"');
@@ -1111,6 +1135,9 @@ object_specifier:
                 vector *message = vector_get(object_messages, i);
                 if(!string_equals(vector_get(message, 2), new_string("new"))
                 && !string_equals(vector_get(message, 2), new_string("defer"))) {
+                    /* Add an identifier to avoid name collisions */
+                    string_add_str($$, "zircon_");
+
                     string_add_str($$, string_get(vector_get(message, 2)));
                     string_add_str($$, ", ");
                     string_add_str($$, string_get($2));
@@ -1125,7 +1152,7 @@ object_specifier:
             string_add_str($$, string_get($2));
             string_add_str($$, ") ");
             string_add_str($$, string_get($2));
-            string_add_str($$, " = new(\n");
+            string_add_str($$, " = zircon_new(\n");
             string_add_str($$, "Class,\n");
             string_add_char($$, '\"');
             string_add_str($$, string_get($2));
@@ -1140,6 +1167,9 @@ object_specifier:
                 vector *message = vector_get(object_messages, i);
                 if(!string_equals(vector_get(message, 2), new_string("new"))
                 && !string_equals(vector_get(message, 2), new_string("defer"))) {
+                    /* Add an identifier to avoid name collisions */
+                    string_add_str($$, "zircon_");
+                    
                     string_add_str($$, string_get(vector_get(message, 2)));
                     string_add_str($$, ", ");
                     string_add_str($$, string_get($2));
@@ -1151,13 +1181,13 @@ object_specifier:
         }
 
         if(constructor_is_overriden) {
-            string_add_str($$, "ctor, ");
+            string_add_str($$, "zircon_ctor, ");
             string_add_str($$, string_get($2));
             string_add_str($$, "_ctor,\n");
         }
 
         if(destructor_is_overriden) {
-            string_add_str($$, "dtor, ");
+            string_add_str($$, "zircon_dtor, ");
             string_add_str($$, string_get($2));
             string_add_str($$, "_dtor,\n");
         }
@@ -1293,6 +1323,10 @@ object_specifier:
                 && !string_equals(vector_get(message, 1), new_string("super "))) {
                     /* Write base call */
                     string_add_str($$, string_get(vector_get(message, 0)));
+                    
+                    /* Add an identifier to avoid name collisions */
+                    string_add_str($$, "zircon_");
+
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
                         string_add_str($$, "(const void *_self");
@@ -1330,6 +1364,10 @@ object_specifier:
 
                     /* Write super call */
                     string_add_str($$, string_get(vector_get(message, 0)));
+
+                    /* Add an identifier to avoid name collisions */
+                    string_add_str($$, "zircon_");
+
                     string_add_str($$, "super_");
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
@@ -1388,7 +1426,7 @@ object_specifier:
             string_add_str($$, "_ctor(void *_self, va_list *app) {\n");
             string_add_str($$, "    struct ");
             string_add_str($$, string_get($2));
-            string_add_str($$, " *self = super_ctor(");
+            string_add_str($$, " *self = zircon_super_ctor(");
             string_add_str($$, string_get($2));
             string_add_str($$, ", _self, app");
             string_add_str($$, ");\n\n");
@@ -1415,7 +1453,7 @@ object_specifier:
             string_add_str($$, "_dtor(void *_self) {\n");
             string_add_str($$, "    struct ");
             string_add_str($$, string_get($2));
-            string_add_str($$, " *self = super_dtor(");
+            string_add_str($$, " *self = zircon_super_dtor(");
             string_add_str($$, string_get($2));
             string_add_str($$, ", _self);\n\n");
             string_add_str($$, string_get(method_on_defer));
@@ -1464,7 +1502,7 @@ object_specifier:
             string_add_str($$, "Class_ctor(void *_self, va_list *app) {\n");
             string_add_str($$, "    struct ");
             string_add_str($$, string_get($2));
-            string_add_str($$, "Class *self = super_ctor(");
+            string_add_str($$, "Class *self = zircon_super_ctor(");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class, _self, app);\n\n");
             string_add_str($$, "    typedef void (*voidf)();\n");
@@ -1484,6 +1522,10 @@ object_specifier:
                 || string_equals(vector_get(message, 1), new_string("super ")))
                     continue;
                 string_add_str($$, "        if(selector == (voidf)");
+
+                /* Add an identifier to avoid name collisions */
+                string_add_str($$, "zircon_");
+
                 string_add_str($$, string_get(vector_get(message, 2)));
                 string_add_str($$, ")\n");
                 string_add_str($$, "            *(voidf*)&self->");
@@ -1513,7 +1555,7 @@ object_specifier:
             string_add_str($$, string_get($2));
             string_add_str($$, "Class) ");
             string_add_str($$, string_get($2));
-            string_add_str($$, "Class = new(");
+            string_add_str($$, "Class = zircon_new(");
             string_add_str($$, "Class,\n");
             string_add_char($$, '\"');
             string_add_str($$, string_get($2));
@@ -1527,7 +1569,7 @@ object_specifier:
             string_add_str($$, "sizeof(struct ");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class),\n");
-            string_add_str($$, "ctor, ");
+            string_add_str($$, "zircon_ctor, ");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class_ctor,\n");
             string_add_str($$, "0);\n");
@@ -1536,7 +1578,7 @@ object_specifier:
             string_add_str($$, string_get($2));
             string_add_str($$, ") ");
             string_add_str($$, string_get($2));
-            string_add_str($$, " = new(\n");
+            string_add_str($$, " = zircon_new(\n");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class,\n");
             string_add_char($$, '\"');
@@ -1552,6 +1594,9 @@ object_specifier:
                 vector *message = vector_get(object_messages, i);
                 if(!string_equals(vector_get(message, 2), new_string("new"))
                 && !string_equals(vector_get(message, 2), new_string("defer"))) {
+                    /* Add an identifier to avoid name collisions */
+                    string_add_str($$, "zircon_");
+
                     string_add_str($$, string_get(vector_get(message, 2)));
                     string_add_str($$, ", ");
                     string_add_str($$, string_get($2));
@@ -1567,7 +1612,7 @@ object_specifier:
             string_add_str($$, string_get($2));
             string_add_str($$, ") ");
             string_add_str($$, string_get($2));
-            string_add_str($$, " = new(\n");
+            string_add_str($$, " = zircon_new(\n");
             string_add_str($$, "Class,\n");
             string_add_char($$, '\"');
             string_add_str($$, string_get($2));
@@ -1582,6 +1627,9 @@ object_specifier:
                 vector *message = vector_get(object_messages, i);
                 if(!string_equals(vector_get(message, 2), new_string("new"))
                 && !string_equals(vector_get(message, 2), new_string("defer"))) {
+                    /* Add an identifier to avoid name collisions */
+                    string_add_str($$, "zircon_");
+
                     string_add_str($$, string_get(vector_get(message, 2)));
                     string_add_str($$, ", ");
                     string_add_str($$, string_get($2));
@@ -1593,13 +1641,13 @@ object_specifier:
         }
         
         if(constructor_is_overriden) {
-            string_add_str($$, "ctor, ");
+            string_add_str($$, "zircon_ctor, ");
             string_add_str($$, string_get($2));
             string_add_str($$, "_ctor,\n");
         }
 
         if(destructor_is_overriden) {
-            string_add_str($$, "dtor, ");
+            string_add_str($$, "zircon_dtor, ");
             string_add_str($$, string_get($2));
             string_add_str($$, "_dtor,\n");
         }
@@ -2912,112 +2960,112 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    return self->super;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *ctor(void *_self, va_list *app) {\n");
+    string_add_str(obj, "void *zircon_ctor(void *_self, va_list *app) {\n");
     string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
     string_add_str(obj, "    \n");
     string_add_str(obj, "    assert(class->ctor);\n");
     string_add_str(obj, "    return class->ctor(_self, app);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *super_ctor(const void *_class, void *_self, va_list *app) {\n");
+    string_add_str(obj, "void *zircon_super_ctor(const void *_class, void *_self, va_list *app) {\n");
     string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->ctor);\n");
     string_add_str(obj, "    return superclass->ctor(_self, app);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *dtor(void *_self) {\n");
+    string_add_str(obj, "void *zircon_dtor(void *_self) {\n");
     string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->dtor);\n");
     string_add_str(obj, "    return class->dtor(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *super_dtor(const void *_class, void *_self) {\n");
+    string_add_str(obj, "void *zircon_super_dtor(const void *_class, void *_self) {\n");
     string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->dtor);\n");
     string_add_str(obj, "    return superclass->dtor(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool differ(const void *_self, const void *other) {\n");
+    string_add_str(obj, "bool zircon_differ(const void *_self, const void *other) {\n");
     string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->differ);\n");
     string_add_str(obj, "    return class->differ(_self, other);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool super_differ(const void *_class, const void *_self, const void *other) {\n");
+    string_add_str(obj, "bool zircon_super_differ(const void *_class, const void *_self, const void *other) {\n");
     string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->differ);\n");
     string_add_str(obj, "    return superclass->differ(_self, other);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool puto(const void *_self, FILE *fd) {\n");
+    string_add_str(obj, "bool zircon_puto(const void *_self, FILE *fd) {\n");
     string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->puto);\n");
     string_add_str(obj, "    return class->puto(_self, fd);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool super_puto(const void *_class, const void *_self, FILE *fd) {\n");
+    string_add_str(obj, "bool zircon_super_puto(const void *_class, const void *_self, FILE *fd) {\n");
     string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->puto);\n");
     string_add_str(obj, "    return superclass->puto(_self, fd);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *class(void *_self) {\n");
+    string_add_str(obj, "void *zircon_class(void *_self) {\n");
     string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->class);\n");
     string_add_str(obj, "    return class->class(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *super_class(void *_class, void *_self) {\n");
+    string_add_str(obj, "void *zircon_super_class(void *_class, void *_self) {\n");
     string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->class);\n");
     string_add_str(obj, "    return superclass->class(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *superclass(void *_self) {\n");
+    string_add_str(obj, "void *zircon_superclass(void *_self) {\n");
     string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->superclass);\n");
     string_add_str(obj, "    return class->superclass(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *super_superclass(void *_class, void *_self) {\n");
+    string_add_str(obj, "void *zircon_super_superclass(void *_class, void *_self) {\n");
     string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->superclass);\n");
     string_add_str(obj, "    return superclass->superclass(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool is_a(const void *_self, const char *other) {\n");
+    string_add_str(obj, "bool zircon_is_a(const void *_self, const char *other) {\n");
     string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->is_a);\n");
     string_add_str(obj, "    return class->is_a(_self, other);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool super_is_a(const void *_class, void *_self, char *other) {\n");
+    string_add_str(obj, "bool zircon_super_is_a(const void *_class, void *_self, char *other) {\n");
     string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->is_a);\n");
     string_add_str(obj, "    return superclass->is_a(_self, other);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "char *to_string(const void *_self) {\n");
+    string_add_str(obj, "char *zircon_to_string(const void *_self) {\n");
     string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->to_string);\n");
     string_add_str(obj, "    return class->to_string(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "char *super_to_string(const void *_class, void *_self) {\n");
+    string_add_str(obj, "char *zircon_super_to_string(const void *_class, void *_self) {\n");
     string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->to_string);\n");
@@ -3087,21 +3135,21 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    while((selector = va_arg(ap, voidf))) {\n");
     string_add_str(obj, "        voidf method = va_arg(ap, voidf);\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "        if(selector == (voidf)ctor)\n");
+    string_add_str(obj, "        if(selector == (voidf)zircon_ctor)\n");
     string_add_str(obj, "            *(voidf*)&self->ctor = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)dtor)\n");
+    string_add_str(obj, "        else if(selector == (voidf)zircon_dtor)\n");
     string_add_str(obj, "            *(voidf*)&self->dtor = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)differ)\n");
+    string_add_str(obj, "        else if(selector == (voidf)zircon_differ)\n");
     string_add_str(obj, "            *(voidf*)&self->differ = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)puto)\n");
+    string_add_str(obj, "        else if(selector == (voidf)zircon_puto)\n");
     string_add_str(obj, "            *(voidf*)&self->puto = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)class)\n");
+    string_add_str(obj, "        else if(selector == (voidf)zircon_class)\n");
     string_add_str(obj, "            *(voidf*)&self->class = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)superclass)\n");
+    string_add_str(obj, "        else if(selector == (voidf)zircon_superclass)\n");
     string_add_str(obj, "            *(voidf*)&self->superclass = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)is_a)\n");
+    string_add_str(obj, "        else if(selector == (voidf)zircon_is_a)\n");
     string_add_str(obj, "            *(voidf*)&self->is_a = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)to_string)\n");
+    string_add_str(obj, "        else if(selector == (voidf)zircon_to_string)\n");
     string_add_str(obj, "            *(voidf*)&self->to_string = method;\n");
     string_add_str(obj, "    }\n");
     string_add_str(obj, "#ifdef va_copy\n");
@@ -3118,7 +3166,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    return 0;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static void *new(const void *_class, ...) {\n");
+    string_add_str(obj, "static void *zircon_new(const void *_class, ...) {\n");
     string_add_str(obj, "    const struct Class *class = _class;\n");
     string_add_str(obj, "    assert(class && class->size);\n");
     string_add_str(obj, "\n");
@@ -3130,13 +3178,13 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "    object->class = class;\n");
     string_add_str(obj, "    va_start(ap, _class);\n");
-    string_add_str(obj, "        object = ctor(object, &ap);\n");
+    string_add_str(obj, "        object = zircon_ctor(object, &ap);\n");
     string_add_str(obj, "    va_end(ap);\n");
     string_add_str(obj, "    return object;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static void defer(void *_self) {\n");
-    string_add_str(obj, "    if(_self) free(dtor(_self));\n");
+    string_add_str(obj, "static void zircon_defer(void *_self) {\n");
+    string_add_str(obj, "    if(_self) free(zircon_dtor(_self));\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "static const struct Class object [] = {\n");
