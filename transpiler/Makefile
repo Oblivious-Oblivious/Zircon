@@ -25,8 +25,8 @@ bison:
 
 compiler: flex bison
 	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
-	cp $(OUTPUT) testcases/objects/
+	cp $(OUTPUT) ../examples/objects/
 
 clean:
-	rm -f testcases/objects/$(OUTPUT)
+	rm -f ../examples/objects/$(OUTPUT)
 	rm -f $(OUTPUT) $(LEX_OUT) $(YACC_OUT).c $(YACC_OUT).h out.c out Object.h
