@@ -1,7 +1,7 @@
 CC = gcc
 OPT = -O2 -march=native
 #VERSION = -std=c89
-OUTPUT = emerald
+OUTPUT = zircon
 
 FLAGS =
 WARNINGS =
@@ -25,7 +25,8 @@ bison:
 
 compiler: flex bison
 	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
-	cp emerald testcases/objects/
+	cp $(OUTPUT) testcases/objects/
 
 clean:
+	rm -f testcases/objects/$(OUTPUT)
 	rm -f $(OUTPUT) $(LEX_OUT) $(YACC_OUT).c $(YACC_OUT).h out.c out Object.h
