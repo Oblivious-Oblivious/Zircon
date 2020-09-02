@@ -192,8 +192,8 @@ postfix_expression:
         string_skip($2, 1);
         string_shorten($2, string_length($2) - 2);
 
-        /* Replace spaces */
-        $2 = string_map($2, (stringlambda)replace_spaces);
+        /* Turn into an identifier */
+        $2 = new_string(string_identifier($2));
 
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
@@ -210,8 +210,8 @@ postfix_expression:
         string_skip($2, 1);
         string_shorten($2, string_length($2) - 1);
 
-        /* Replace spaces */
-        $2 = string_map($2, (stringlambda)replace_spaces);
+        /* Turn into an identifier */
+        $2 = new_string(string_identifier($2));
 
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
@@ -226,8 +226,8 @@ postfix_expression:
         string_skip($2, 1);
         string_shorten($2, string_length($2) - 2);
 
-        /* Replace spaces */
-        $2 = string_map($2, (stringlambda)replace_spaces);
+        /* Turn into an identifier */
+        $2 = new_string(string_identifier($2));
 
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
@@ -244,8 +244,8 @@ postfix_expression:
         string_skip($2, 1);
         string_shorten($2, string_length($2) - 1);
 
-        /* Replace spaces */
-        $2 = string_map($2, (stringlambda)replace_spaces);
+        /* Turn into an identifier */
+        $2 = new_string(string_identifier($2));
 
         string_add_str($$, string_get($2));
         string_add_char($$, '(');
@@ -792,8 +792,8 @@ object_specifier:
             string_skip(name, 1);
             string_shorten(name, string_length(name) - 2);
 
-            /* Replace spaces */
-            name = string_map(name, (stringlambda)replace_spaces);
+            /* Turn into an identifier */
+            name = new_string(string_identifier(name));
             vector_set(message, 2, name);
 
             if(string_equals(vector_get(message, 1), new_string("self ")))
@@ -1222,8 +1222,8 @@ object_specifier:
             string_skip(name, 1);
             string_shorten(name, string_length(name) - 2);
 
-            /* Replace spaces */
-            name = string_map(name, (stringlambda)replace_spaces);
+            /* Turn into an identifier */
+            name = new_string(string_identifier(name));
             vector_set(message, 2, name);
 
             if(string_equals(vector_get(message, 1), new_string("self ")))

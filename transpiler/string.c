@@ -198,3 +198,38 @@ string *string_map(string *sb, stringlambda modifier) {
 
     return sb_dup;
 }
+
+char *string_identifier(string *sb) {
+    if(sb == NULL) return NULL;
+
+    string *output = new_string("");
+
+    unsigned char add_underscore = 0;
+    char buf[32];
+    int i;
+
+    for(i = 0; i < string_length(sb); i++) {
+        char c = string_get(sb)[i];
+
+        if((c > 47 && c < 58)
+        || (c > 64 && c < 91)
+        || (c > 96 && c != 95 && c < 123))
+            string_add_char(output, c);
+        else if(c == 32)
+            string_add_char(output, '_');
+        else {
+            if(i == 0) add_underscore = 1;
+            sprintf(buf, "%02x", c & 0xff);
+            string_add_str(output, buf);
+        }
+    }
+
+    string *ret_value;
+    if(add_underscore)
+        ret_value = new_string("_");
+    else
+        ret_value = new_string("");
+    string_add_str(ret_value, string_get(output));
+
+    return string_get(ret_value);
+}

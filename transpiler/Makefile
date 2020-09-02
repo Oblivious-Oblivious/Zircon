@@ -25,7 +25,7 @@ bison:
 
 compiler: flex bison
 	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
-	cp $(OUTPUT) ../examples/objects/
+	cp $(OUTPUT) ../examples/
 
 clean:
 	rm -f ../examples/objects/$(OUTPUT)
