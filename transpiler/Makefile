@@ -4,7 +4,7 @@ OPT = -O2 -march=native
 OUTPUT = zircon
 
 FLAGS =
-WARNINGS =
+WARNINGS = -Wno-int-conversion
 YACC_WARNINGS =
 HEADERS =
 LIBS =

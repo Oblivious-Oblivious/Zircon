@@ -23,11 +23,6 @@ hashmap *typedef_names;
 hashmap *object_names;
 hashmap *enum_constants;
 
-static char replace_spaces(char c) {
-    if(c == ' ') return '_';
-    return c;
-}
-
 %}
 
 %union {
@@ -1021,7 +1016,9 @@ object_specifier:
                     string_add_str($$, ", ");
                     vector *current_message_fields = vector_get(message_fields, j);
                     string_add_str($$, string_get(vector_get(current_message_fields, 0)));
-                    string_add_char($$, '_');
+                    bool is_message_an_object = vector_get(current_message_fields, 2);
+                    if(is_message_an_object)
+                        string_add_char($$, '_');
                     string_add_str($$, string_get(vector_get(current_message_fields, 1)));
                 }
             }
@@ -1498,7 +1495,9 @@ object_specifier:
                     string_add_str($$, ", ");
                     vector *current_message_fields = vector_get(message_fields, j);
                     string_add_str($$, string_get(vector_get(current_message_fields, 0)));
-                    string_add_char($$, '_');
+                    bool is_message_an_object = vector_get(current_message_fields, 2);
+                    if(is_message_an_object)
+                        string_add_char($$, '_');
                     string_add_str($$, string_get(vector_get(current_message_fields, 1)));
                 }
             }
@@ -3296,6 +3295,26 @@ static void display_hashmap(hashmap *map) {
 }
 /**/
 
+#ifdef _WIN32
+    #include <windows.h>
+
+    #define mkdir(dir, mode)      _mkdir(dir)
+    #define open(name, ...)       _open(name, __VA_ARGS__)
+    #define read(fd, buf, count)  _read(fd, buf, count)
+    #define close(fd)             _close(fd)
+    #define write(fd, buf, count) _write(fd, buf, count)
+    #define dup2(fd1, fd2)        _dup2(fd1, fd2)
+    #define unlink(file)          _unlink(file)
+    #define rmdir(dir)            _rmdir(dir)
+    #define getpid()              _getpid()
+    #define usleep(t)             Sleep((t)/1000)
+    #define sleep(t)              Sleep((t)*1000)
+#else
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <unistd.h>
+#endif
+
 int main(int argc, char **argv) {
     __setup_hashmaps();
     /**/
@@ -3309,6 +3328,12 @@ int main(int argc, char **argv) {
     /********************************/
     int i;
     FILE *fp;
+    
+    /* Copy all files into a local directory and fix the paths */
+    /* for(i = 1; i < argc; i++) {
+        printf("path: %s\n", argv[i]);
+        mkdir("./testme", 0755);
+    } */
     for(i = 1; i < argc; i++) {
         printf("Compiling: %s\n", argv[i]);
         yyin = fopen(argv[i], "r");
