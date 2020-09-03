@@ -12,7 +12,7 @@
 //     (void*) self |> "test abstract with 2 param" |> (void*): a, (void*): b;
 // }
 
-object Test implements Object(int aValue, int bValue) {
+object Test implements Object((int): aValue, (int): bValue) {
     fields {
         // TestModel data1;
         // implements TestModel;

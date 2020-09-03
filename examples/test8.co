@@ -2,23 +2,15 @@
 
 #include <stdio.h>
 
-// model Composition_Model {
-//     int a;
-//     int b;
-// }
+// object Composition_Model implements Object {
+//     fields {
+//         int a;
+//         int b;
+//     }
+//  }
 
-// protocol Composition_Protocol implements Object {
-//     (int) self |> "add";
-//     (int) self |> "sub";
-//     (int) self |> "mul";
-//     (int) self |> "div";
-// }
-
-object Composition implements Object(int aValue, int bValue) {
+object Composition implements Object((int): aValue, (int): bValue) {
     fields {
-        /* Compose objects */
-        // Composition_Model data1;
-        // implements Composition_Model;
         int a;
         int b;
     }
@@ -31,8 +23,8 @@ object Composition implements Object(int aValue, int bValue) {
         self->b = bValue;
     }
 
-    // (void) self |> "set a" |> (int): a |> self->data1->a = a;
-    // (void) self |> "set b" |> (int): b |> self->data1->b = b;
+    (void) self |> "set a" |> (int): a |> self->a = a;
+    (void) self |> "set b" |> (int): b |> self->b = b;
 
     (int) self |> "add" |> return self->a + self->b;
     (int) self |> "sub" |> return self->a - self->b;
