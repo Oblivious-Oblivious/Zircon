@@ -3315,6 +3315,10 @@ static void display_hashmap(hashmap *map) {
     #include <unistd.h>
 #endif
 
+void delete_file(string *filename) {
+    remove(string_get(filename));
+}
+
 int main(int argc, char **argv) {
     __setup_hashmaps();
     /**/
@@ -3328,13 +3332,27 @@ int main(int argc, char **argv) {
     /********************************/
     int i;
     FILE *fp;
+    vector *files = new_vector();
+    vector_add(files, new_string("Object.h"));
+    string *command = new_string("gcc ");
     
-    /* Copy all files into a local directory and fix the paths */
-    /* for(i = 1; i < argc; i++) {
-        printf("path: %s\n", argv[i]);
-        mkdir("./testme", 0755);
-    } */
-    for(i = 1; i < argc; i++) {
+    /* Generate the c files only */
+    int total_i_values = 1;
+    bool do_not_compile = false;
+    if(string_equals(new_string(argv[1]), new_string("-cfile"))) {
+        total_i_values++;
+        do_not_compile = true;
+    }
+    if(string_equals(string_substring(new_string(argv[1]), 0, 1), new_string("-o"))) {
+        string *output_file = new_string(argv[1]);
+        string_skip(output_file, 2);
+        string_add_str(command, "-o ");
+        string_add_str(command, string_get(output_file));
+        string_add_char(command, ' ');
+        total_i_values++;
+    }
+
+    for(i = total_i_values; i < argc; i++) {
         printf("Compiling: %s\n", argv[i]);
         yyin = fopen(argv[i], "r");
         translation = new_string("");
@@ -3346,9 +3364,12 @@ int main(int argc, char **argv) {
         /* Write the init nodes */
         if(main_flag) {
             __setup_init_objects();
-            filename = new_string(argv[i]);
-            string_shorten(filename, string_length(filename) - 1);
+            filename = new_string("__zircon_main.c");
+            string_add_str(command, string_get(filename));
         }
+
+        vector_add(files, filename);
+
         fp = fopen(string_get(filename), "w");
         fprintf(fp, "%s", string_get(translation));
         fclose(fp);
@@ -3362,5 +3383,12 @@ int main(int argc, char **argv) {
         display_hashmap(object_names); */
         /* @@@ */
     }
+
+    if(!do_not_compile) {
+        printf("Executing: `%s`\n", string_get(command));
+        system(string_get(command));
+        vector_map(files, (lambda)delete_file);
+    }
+
     /*********************************/
 }
