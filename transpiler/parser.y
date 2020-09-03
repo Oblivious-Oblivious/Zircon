@@ -775,7 +775,7 @@ object_specifier:
         string_add_str($$, "/* REPRESENTATION */\n");
         string_add_str($$, "struct ");
         string_add_str($$, string_get($2));
-        string_add_str($$, " {\n    const struct ");
+        string_add_str($$, " {\n    struct ");
         string_add_str($$, string_get($4));
         string_add_str($$, " _;\n");
 
@@ -819,7 +819,7 @@ object_specifier:
                 string_add_str(inherited_class, string_get($4));
                 string_add_str(inherited_class, "Class");
             }
-            string_add_str($$, "    const struct ");
+            string_add_str($$, "    struct ");
             string_add_str($$, string_get(inherited_class));
             string_add_str($$, " _;\n");
             for(i = 0; i < vector_length(object_messages); i++) {
@@ -832,9 +832,9 @@ object_specifier:
                     string_add_str($$, " (*");
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
-                        string_add_str($$, ")(const void *self");
+                        string_add_str($$, ")(void *self");
                     else {
-                        string_add_str($$, ")(const void *self");
+                        string_add_str($$, ")(void *self");
                         vector *message_fields = vector_get(message, 3);
                         int j;
                         for(j = 0; j < vector_length(message_fields); j++) {
@@ -852,11 +852,11 @@ object_specifier:
 
         string_add_str($$, "\n\n");
         string_add_str($$, "/* DECLARATIONS */\n");
-        string_add_str($$, "const void *");
+        string_add_str($$, "void *");
         string_add_str($$, string_get($2));
         string_add_str($$, ";\n");
         if(locally_defined_messages != 0) {
-            string_add_str($$, "const void *");
+            string_add_str($$, "void *");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class;\n");
         }
@@ -876,9 +876,9 @@ object_specifier:
 
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
-                        string_add_str($$, "(const void *_self");
+                        string_add_str($$, "(void *_self");
                     else {
-                        string_add_str($$, "(const void *_self");
+                        string_add_str($$, "(void *_self");
                         vector *message_fields = vector_get(message, 3);
                         int j;
                         for(j = 0; j < vector_length(message_fields); j++) {
@@ -889,7 +889,7 @@ object_specifier:
                         }
                     }
                     string_add_str($$, ") {\n");
-                    string_add_str($$, "    const struct ");
+                    string_add_str($$, "    struct ");
                     string_add_str($$, string_get($2));
                     string_add_str($$, "Class *class = classOf(_self);\n\n");
                     string_add_str($$, "    assert(class->");
@@ -918,9 +918,9 @@ object_specifier:
                     string_add_str($$, "super_");
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
-                        string_add_str($$, "(const void *_class, const void *_self");
+                        string_add_str($$, "(void *_class, void *_self");
                     else {
-                        string_add_str($$, "(const void *_class, const void *_self");
+                        string_add_str($$, "(void *_class, void *_self");
                         vector *message_fields = vector_get(message, 3);
                         int j;
                         for(j = 0; j < vector_length(message_fields); j++) {
@@ -931,7 +931,7 @@ object_specifier:
                         }
                     }
                     string_add_str($$, ") {\n");
-                    string_add_str($$, "    const struct ");
+                    string_add_str($$, "    struct ");
                     string_add_str($$, string_get($2));
                     string_add_str($$, "Class *superclass = super(_class);\n\n");
                     string_add_str($$, "    assert(_self && superclass->");
@@ -1243,7 +1243,7 @@ object_specifier:
         string_add_str($$, "/* REPRESENTATION */\n");
         string_add_str($$, "struct ");
         string_add_str($$, string_get($2));
-        string_add_str($$, " {\n    const struct ");
+        string_add_str($$, " {\n    struct ");
         string_add_str($$, string_get($4));
         string_add_str($$, " _;\n");
 
@@ -1287,7 +1287,7 @@ object_specifier:
                 string_add_str(inherited_class, string_get($4));
                 string_add_str(inherited_class, "Class");
             }
-            string_add_str($$, "    const struct ");
+            string_add_str($$, "    struct ");
             string_add_str($$, string_get(inherited_class));
             string_add_str($$, " _;\n");
             for(i = 0; i < vector_length(object_messages); i++) {
@@ -1300,9 +1300,9 @@ object_specifier:
                     string_add_str($$, " (*");
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
-                        string_add_str($$, ")(const void *self");
+                        string_add_str($$, ")(void *self");
                     else {
-                        string_add_str($$, ")(const void *self");
+                        string_add_str($$, ")(void *self");
                         vector *message_fields = vector_get(message, 3);
                         int j;
                         for(j = 0; j < vector_length(message_fields); j++) {
@@ -1320,11 +1320,11 @@ object_specifier:
 
         string_add_str($$, "\n\n");
         string_add_str($$, "/* DECLARATIONS */\n");
-        string_add_str($$, "const void *");
+        string_add_str($$, "void *");
         string_add_str($$, string_get($2));
         string_add_str($$, ";\n");
         if(locally_defined_messages != 0) {
-            string_add_str($$, "const void *");
+            string_add_str($$, "void *");
             string_add_str($$, string_get($2));
             string_add_str($$, "Class;\n");
         }
@@ -1344,9 +1344,9 @@ object_specifier:
 
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
-                        string_add_str($$, "(const void *_self");
+                        string_add_str($$, "(void *_self");
                     else {
-                        string_add_str($$, "(const void *_self");
+                        string_add_str($$, "(void *_self");
                         vector *message_fields = vector_get(message, 3);
                         int j;
                         for(j = 0; j < vector_length(message_fields); j++) {
@@ -1357,7 +1357,7 @@ object_specifier:
                         }
                     }
                     string_add_str($$, ") {\n");
-                    string_add_str($$, "    const struct ");
+                    string_add_str($$, "    struct ");
                     string_add_str($$, string_get($2));
                     string_add_str($$, "Class *class = classOf(_self);\n\n");
                     string_add_str($$, "    assert(class->");
@@ -1386,9 +1386,9 @@ object_specifier:
                     string_add_str($$, "super_");
                     string_add_str($$, string_get(vector_get(message, 2)));
                     if(string_length(vector_get(message, 3)) == 0)
-                        string_add_str($$, "(const void *_class, const void *_self");
+                        string_add_str($$, "(void *_class, void *_self");
                     else {
-                        string_add_str($$, "(const void *_class, const void *_self");
+                        string_add_str($$, "(void *_class, void *_self");
                         vector *message_fields = vector_get(message, 3);
                         int j;
                         for(j = 0; j < vector_length(message_fields); j++) {
@@ -1399,7 +1399,7 @@ object_specifier:
                         }
                     }
                     string_add_str($$, ") {\n");
-                    string_add_str($$, "    const struct ");
+                    string_add_str($$, "    struct ");
                     string_add_str($$, string_get($2));
                     string_add_str($$, "Class *superclass = super(_class);\n\n");
                     string_add_str($$, "    assert(_self && superclass->");
@@ -2969,150 +2969,150 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "#define true 1\n");
     string_add_str(obj, "#define false 0\n\n");
     string_add_str(obj, "struct Object {\n");
-    string_add_str(obj, "    const struct Class *class;\n");
+    string_add_str(obj, "    struct Class *class;\n");
     string_add_str(obj, "};\n");
     string_add_str(obj, "struct Class {\n");
-    string_add_str(obj, "    const struct Object _;\n");
-    string_add_str(obj, "    const char *name;\n");
-    string_add_str(obj, "    const struct Class *super;\n");
+    string_add_str(obj, "    struct Object _;\n");
+    string_add_str(obj, "    char *name;\n");
+    string_add_str(obj, "    struct Class *super;\n");
     string_add_str(obj, "    size_t size;\n");
     string_add_str(obj, "    void *(*ctor)(void *self, va_list *app);\n");
     string_add_str(obj, "    void *(*dtor)(void *self);\n");
-    string_add_str(obj, "    bool (*differ)(const void *self, const void *other);\n");
-    string_add_str(obj, "    bool (*puto)(const void *self, FILE *fd);\n");
+    string_add_str(obj, "    bool (*differ)(void *self, void *other);\n");
+    string_add_str(obj, "    bool (*puto)(void *self, FILE *fd);\n");
 
     string_add_str(obj, "    void *(*class)(void *self);\n");
     string_add_str(obj, "    void *(*superclass)(void *self);\n");
-    string_add_str(obj, "    bool (*is_a)(const void *self, const char *other);\n");
-    string_add_str(obj, "    char *(*to_string)(const void *self);\n");
+    string_add_str(obj, "    bool (*is_a)(void *self, char *other);\n");
+    string_add_str(obj, "    char *(*to_string)(void *self);\n");
     string_add_str(obj, "};\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static const void *classOf(const void *_self) {\n");
-    string_add_str(obj, "    const struct Object *self = _self;\n");
+    string_add_str(obj, "static void *classOf(void *_self) {\n");
+    string_add_str(obj, "    struct Object *self = _self;\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && self && self->class);\n");
     string_add_str(obj, "    return self->class;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static size_t sizeOf(const void *_self) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "static size_t sizeOf(void *_self) {\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "    return class->size;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static const void *super(const void *_self) {\n");
-    string_add_str(obj, "    const struct Class *self = _self;\n");
+    string_add_str(obj, "static void *super(void *_self) {\n");
+    string_add_str(obj, "    struct Class *self = _self;\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && self && self->super);\n");
     string_add_str(obj, "    return self->super;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_ctor(void *_self, va_list *app) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "    \n");
     string_add_str(obj, "    assert(class->ctor);\n");
     string_add_str(obj, "    return class->ctor(_self, app);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_super_ctor(const void *_class, void *_self, va_list *app) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "void *zircon_super_ctor(void *_class, void *_self, va_list *app) {\n");
+    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->ctor);\n");
     string_add_str(obj, "    return superclass->ctor(_self, app);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_dtor(void *_self) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->dtor);\n");
     string_add_str(obj, "    return class->dtor(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_super_dtor(const void *_class, void *_self) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "void *zircon_super_dtor(void *_class, void *_self) {\n");
+    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->dtor);\n");
     string_add_str(obj, "    return superclass->dtor(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_differ(const void *_self, const void *other) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "bool zircon_differ(void *_self, void *other) {\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->differ);\n");
     string_add_str(obj, "    return class->differ(_self, other);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_super_differ(const void *_class, const void *_self, const void *other) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "bool zircon_super_differ(void *_class, void *_self, void *other) {\n");
+    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->differ);\n");
     string_add_str(obj, "    return superclass->differ(_self, other);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_puto(const void *_self, FILE *fd) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "bool zircon_puto(void *_self, FILE *fd) {\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->puto);\n");
     string_add_str(obj, "    return class->puto(_self, fd);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_super_puto(const void *_class, const void *_self, FILE *fd) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "bool zircon_super_puto(void *_class, void *_self, FILE *fd) {\n");
+    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->puto);\n");
     string_add_str(obj, "    return superclass->puto(_self, fd);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_class(void *_self) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->class);\n");
     string_add_str(obj, "    return class->class(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_super_class(void *_class, void *_self) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->class);\n");
     string_add_str(obj, "    return superclass->class(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_superclass(void *_self) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->superclass);\n");
     string_add_str(obj, "    return class->superclass(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_super_superclass(void *_class, void *_self) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->superclass);\n");
     string_add_str(obj, "    return superclass->superclass(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_is_a(const void *_self, const char *other) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "bool zircon_is_a(void *_self, char *other) {\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->is_a);\n");
     string_add_str(obj, "    return class->is_a(_self, other);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_super_is_a(const void *_class, void *_self, char *other) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "bool zircon_super_is_a(void *_class, void *_self, char *other) {\n");
+    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->is_a);\n");
     string_add_str(obj, "    return superclass->is_a(_self, other);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "char *zircon_to_string(const void *_self) {\n");
-    string_add_str(obj, "    const struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "char *zircon_to_string(void *_self) {\n");
+    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->to_string);\n");
     string_add_str(obj, "    return class->to_string(_self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "char *zircon_super_to_string(const void *_class, void *_self) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "char *zircon_super_to_string(void *_class, void *_self) {\n");
+    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->to_string);\n");
     string_add_str(obj, "    return superclass->to_string(_self);\n");
@@ -3126,32 +3126,32 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    return _self;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static bool Object_differ(const void *_self, const void *other) {\n");
+    string_add_str(obj, "static bool Object_differ(void *_self, void *other) {\n");
     string_add_str(obj, "    return _self != other;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static bool Object_puto(const void *_self, FILE *fd) {\n");
-    string_add_str(obj, "    const struct Class *self = classOf(_self);\n");
+    string_add_str(obj, "static bool Object_puto(void *_self, FILE *fd) {\n");
+    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
     string_add_str(obj, "    return fprintf(fd, \"%s at %p\\n\", self->name, _self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "static void *Object_class(void *_self) {\n");
-    string_add_str(obj, "    const struct Class *self = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
     string_add_str(obj, "    return self;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "static void *Object_superclass(void *_self) {\n");
-    string_add_str(obj, "    const struct Class *superclass = super(_self);\n");
+    string_add_str(obj, "    struct Class *superclass = super(_self);\n");
     string_add_str(obj, "    return superclass;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static bool Object_is_a(const void *_self, const char *name) {\n");
-    string_add_str(obj, "    const struct Class *self = classOf(_self);\n");
+    string_add_str(obj, "static bool Object_is_a(void *_self, char *name) {\n");
+    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
     string_add_str(obj, "    return !strcmp(self->name, name);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static char *Object_to_string(const void *_self) {\n");
-    string_add_str(obj, "    const struct Class *self = classOf(_self);\n");
+    string_add_str(obj, "static char *Object_to_string(void *_self) {\n");
+    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
     string_add_str(obj, "    char *buf = (char*)malloc(sizeof(char) * 1024);\n");
     string_add_str(obj, "    sprintf(buf, \"@%s\", self->name);\n");
     string_add_str(obj, "    return buf;\n");
@@ -3159,7 +3159,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "static void *Class_ctor(void *_self, va_list *app) {\n");
     string_add_str(obj, "    struct Class *self = _self;\n");
-    string_add_str(obj, "    const size_t offset = offsetof(struct Class, ctor);\n");
+    string_add_str(obj, "    size_t offset = offsetof(struct Class, ctor);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    self->name = va_arg(*app, char*);\n");
     string_add_str(obj, "    self->super = va_arg(*app, struct Class*);\n");
@@ -3212,8 +3212,8 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    return 0;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static void *zircon_new(const void *_class, ...) {\n");
-    string_add_str(obj, "    const struct Class *class = _class;\n");
+    string_add_str(obj, "static void *zircon_new(void *_class, ...) {\n");
+    string_add_str(obj, "    struct Class *class = _class;\n");
     string_add_str(obj, "    assert(class && class->size);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    struct Object *object;\n");
@@ -3233,7 +3233,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    if(_self) free(zircon_dtor(_self));\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static const struct Class object [] = {\n");
+    string_add_str(obj, "static struct Class object [] = {\n");
     string_add_str(obj, "    {\n");
     string_add_str(obj, "        { object + 1 },\n");
     string_add_str(obj, "        \"Object\",\n");
@@ -3264,8 +3264,8 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    }\n");
     string_add_str(obj, "};\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "const void *Object = object;\n");
-    string_add_str(obj, "const void *Class = object + 1;\n");
+    string_add_str(obj, "void *Object = object;\n");
+    string_add_str(obj, "void *Class = object + 1;\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "#endif\n");
 
