@@ -1713,7 +1713,11 @@ object_declaration:
     ;
 
 fields_declaration:
-      FIELDS '{' '}' {
+      /* nothing */ {
+        $$ = new_vector();
+        vector_add($$, new_vector());
+    }
+    | FIELDS '{' '}' {
         $$ = new_vector();
         vector_add($$, new_vector());
     }
@@ -3353,7 +3357,7 @@ int main(int argc, char **argv) {
     }
 
     for(i = total_i_values; i < argc; i++) {
-        printf("Compiling: %s\n", argv[i]);
+        printf("\033[38;5;206mCompiling: `%s`\033[0m\n", argv[i]);
         yyin = fopen(argv[i], "r");
         translation = new_string("");
         main_flag = false;
@@ -3375,17 +3379,17 @@ int main(int argc, char **argv) {
         fclose(fp);
 
         /* @@@ */
-        /* printf("\n\033[38;5;207mtypedef_names\033[0m\n");
+        /* printf("\n\033[38;5;206mtypedef_names\033[0m\n");
         display_hashmap(typedef_names);
-        printf("\n\033[38;5;207menum_constants\033[0m\n");
+        printf("\n\033[38;5;206menum_constants\033[0m\n");
         display_hashmap(enum_constants);
-        printf("\n\033[38;5;207mobject_names\033[0m\n");
+        printf("\n\033[38;5;206mobject_names\033[0m\n");
         display_hashmap(object_names); */
         /* @@@ */
     }
 
     if(!do_not_compile) {
-        printf("Executing: `%s`\n", string_get(command));
+        printf("\033[38;5;206mExecuting: `%s`\033[0m\n", string_get(command));
         system(string_get(command));
         vector_map(files, (lambda)delete_file);
     }

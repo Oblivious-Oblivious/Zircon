@@ -1,0 +1,8 @@
+#import "Object"
+
+object Test implements Object {
+}
+
+int main(void) {
+    void *test = Test "new";
+}
