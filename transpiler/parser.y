@@ -1021,6 +1021,7 @@ object_specifier:
                     string_add_str($$, ", ");
                     vector *current_message_fields = vector_get(message_fields, j);
                     string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                    string_add_char($$, '_');
                     string_add_str($$, string_get(vector_get(current_message_fields, 1)));
                 }
             }
@@ -1033,6 +1034,23 @@ object_specifier:
             string_add_str($$, " *super = (struct ");
             string_add_str($$, string_get($4));
             string_add_str($$, "*)self;\n\n");
+            vector *message_fields = vector_get(message, 3);
+            int j;
+            for(j = 0; j < vector_length(message_fields); j++) {
+                /* Check for object parameter */
+                vector *current_message_fields = vector_get(message_fields, j);
+                string *current_message_name = vector_get(current_message_fields, 1);
+                bool is_message_an_object = vector_get(current_message_fields, 2);
+                if(is_message_an_object) {
+                    string_add_str($$, "struct ");
+                    string_add_str($$, string_get($2));
+                    string_add_str($$, " *");
+                    string_add_str($$, string_get(current_message_name));
+                    string_add_str($$, " = _");
+                    string_add_str($$, string_get(current_message_name));
+                    string_add_str($$, ";\n");
+                }
+            }
             string_add_str($$, string_get(vector_get(message, 4)));
             string_add_str($$, "}\n\n");
         }
@@ -1480,6 +1498,7 @@ object_specifier:
                     string_add_str($$, ", ");
                     vector *current_message_fields = vector_get(message_fields, j);
                     string_add_str($$, string_get(vector_get(current_message_fields, 0)));
+                    string_add_char($$, '_');
                     string_add_str($$, string_get(vector_get(current_message_fields, 1)));
                 }
             }
@@ -1492,6 +1511,23 @@ object_specifier:
             string_add_str($$, " *super = (struct ");
             string_add_str($$, string_get($4));
             string_add_str($$, "*)self;\n\n");
+            vector *message_fields = vector_get(message, 3);
+            int j;
+            for(j = 0; j < vector_length(message_fields); j++) {
+                /* Check for object parameter */
+                vector *current_message_fields = vector_get(message_fields, j);
+                string *current_message_name = vector_get(current_message_fields, 1);
+                bool is_message_an_object = vector_get(current_message_fields, 2);
+                if(is_message_an_object) {
+                    string_add_str($$, "struct ");
+                    string_add_str($$, string_get($2));
+                    string_add_str($$, " *");
+                    string_add_str($$, string_get(current_message_name));
+                    string_add_str($$, " = _");
+                    string_add_str($$, string_get(current_message_name));
+                    string_add_str($$, ";\n");
+                }
+            }
             string_add_str($$, string_get(vector_get(message, 4)));
             string_add_str($$, "}\n\n");
         }
@@ -1848,6 +1884,13 @@ object_parameter_type:
         $$ = new_vector();
         vector_add($$, $2); /* type */
         vector_add($$, $5); /* name */
+        vector_add($$, false); /* is object */
+    }
+    | '(' declaration_specifiers_or_pointer ')' ':' '@' declarator {
+        $$ = new_vector();
+        vector_add($$, $2);   /* type */
+        vector_add($$, $6);   /* name */
+        vector_add($$, true); /* is object */
     }
 
 model_declaration_list:
