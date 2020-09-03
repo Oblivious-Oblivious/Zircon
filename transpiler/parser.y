@@ -3152,7 +3152,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "static char *Object_to_string(const void *_self) {\n");
     string_add_str(obj, "    const struct Class *self = classOf(_self);\n");
-    string_add_str(obj, "    char buf[1024];\n");
+    string_add_str(obj, "    char *buf = (char*)malloc(sizeof(char) * 1024);\n");
     string_add_str(obj, "    sprintf(buf, \"@%s\", self->name);\n");
     string_add_str(obj, "    return buf;\n");
     string_add_str(obj, "}\n");

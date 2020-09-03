@@ -15,9 +15,6 @@ object Point2 implements Object((double): x, (double): y) {
         self->y = y;
     }
 
-    (double) self |> "get x" |> return self->x;
-    (double) self |> "get y" |> return self->y;
-
     (void*) self |> "+" |> (void*): @other |> {
         return Point2 "new" self->x + other->x, self->y + other->y;
     }
@@ -35,9 +32,8 @@ object Point2 implements Object((double): x, (double): y) {
     }
 
     (char*) super |> "to string" |> {
-        char buf[1024];
+        char *buf = (char*)malloc(sizeof(char) * 1024);
         sprintf(buf, "P(%g, %g)", self->x, self->y);
-        printf("buf: %s\n", buf);
         return buf;
     }
 
@@ -54,18 +50,9 @@ int main(void) {
     void *sub = a "-" b;
     void *mul = a "*" b;
     void *div = a "/" b;
-    
-    printf("add->x: %g\n", add "get x");
-    printf("add->y: %g\n", add "get y");
-    printf("sub->x: %g\n", sub "get x");
-    printf("sub->y: %g\n", sub "get y");
-    printf("mul->x: %g\n", mul "get x");
-    printf("mul->y: %g\n", mul "get y");
-    printf("div->x: %g\n", div "get x");
-    printf("div->y: %g\n", div "get y");
 
-    printf("a: %s\n", a "to string");
-    printf("b: %s\n", b "to string");
+    printf("a:     %s\n", a   "to string");
+    printf("b:     %s\n", b   "to string");
     printf("a + b: %s\n", add "to string");
     printf("a - b: %s\n", sub "to string");
     printf("a * b: %s\n", mul "to string");
