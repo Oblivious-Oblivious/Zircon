@@ -3324,14 +3324,10 @@ void delete_file(string *filename) {
 }
 
 int main(int argc, char **argv) {
-    __setup_hashmaps();
-    /**/
-    hashmap_add(typedef_names, "size_t", (void*)true);
-    hashmap_add(typedef_names, "bool", (void*)true);
-    /**/
-    
     /* Write the initial `Object.h` */
     __setup_initial_object();
+    main_flag = false;
+    bool main_flag_was_set = false;
 
     /********************************/
     int i;
@@ -3357,16 +3353,22 @@ int main(int argc, char **argv) {
     }
 
     for(i = total_i_values; i < argc; i++) {
+        __setup_hashmaps();
+        /**/
+        hashmap_add(typedef_names, "size_t", (void*)true);
+        hashmap_add(typedef_names, "bool", (void*)true);
+        /**/
+    
         printf("\033[38;5;206mCompiling: `%s`\033[0m\n", argv[i]);
         yyin = fopen(argv[i], "r");
         translation = new_string("");
-        main_flag = false;
 
         /* Parse the text */
         yyparse();
 
         /* Write the init nodes */
         if(main_flag) {
+            main_flag_was_set = true;
             __setup_init_objects();
             filename = new_string("__zircon_main.c");
             string_add_str(command, string_get(filename));
@@ -3388,7 +3390,7 @@ int main(int argc, char **argv) {
         /* @@@ */
     }
 
-    if(!do_not_compile) {
+    if(!do_not_compile && main_flag_was_set) {
         printf("\033[38;5;206mExecuting: `%s`\033[0m\n", string_get(command));
         system(string_get(command));
         vector_map(files, (lambda)delete_file);
