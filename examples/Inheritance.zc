@@ -1,0 +1,44 @@
+#import "Object"
+
+object Parent implements Object((int): a, (int): b) {
+    fields {
+        int a;
+        int b;
+    }
+
+    init {
+        self->a = a;
+        self->b = b;
+    }
+
+    (int) self |> "get a" |> return self->a;
+    (int) self |> "get b" |> return self->b;
+    (int) self |> "set a" |> (int): a |> self->a = a;
+    (int) self |> "set b" |> (int): b |> self->b = b;
+}
+
+object Child implements Parent {
+    fields {}
+    
+    /* Do not need to override accessors since the behaviour does not change */
+    (int) self |> "add" |> return super->a + super->b;
+    (int) self |> "sub" |> return super->a - super->b;
+    (int) self |> "mul" |> return super->a * super->b;
+    (int) self |> "div" |> {
+        if(super->b != 0)
+            return super->a / super->b;
+        return -1;
+    }
+}
+
+int main(void) {
+    void *obj = Child "new" 2, 2;
+    printf("add: expected(4), actual(%d)\n", obj "add"); /* `4` */
+
+    obj "set a" 5;
+    printf("just set a to 5, a = `%d`\n", obj "get a");
+    obj "set b" 3;
+
+    int res = obj "add";
+    printf("res: expected(8), actual(%d)\n", res); /* `8` */
+}

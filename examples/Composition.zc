@@ -50,9 +50,7 @@ int main(void) {
     printf("add: expected(4), actual(%d)\n", obj "add"); /* `4` */
 
     obj "set2 a" 5;
-    printf("just set a to 5, a = `%d`\n", obj "get2 a");
     obj "set2 b" 3;
-
 
     int res = obj "add";
     printf("res: expected(8), actual(%d)\n", res); /* `8` */
