@@ -17,6 +17,7 @@ void yyerror(char*);
 string *translation;
 string *filename;
 bool main_flag = false;
+vector *files;
 
 /* Hashmaps containing special identifiers */
 hashmap *typedef_names;
@@ -778,6 +779,15 @@ object_specifier:
         string_add_str($$, " {\n    struct ");
         string_add_str($$, string_get($4));
         string_add_str($$, " _;\n");
+
+        /* Create the include file */
+        if(!string_equals($4, new_string("Object"))) {
+            string *filename = string_dup($4);
+            string_add_str(filename, ".h");
+            FILE *fp = fopen(string_get(filename), "w");
+            fclose(fp);
+            vector_add(files, filename);
+        }
 
         int i;
         for(i = 0; i < vector_length(object_fields); i++) {
@@ -1713,7 +1723,11 @@ object_declaration:
     ;
 
 fields_declaration:
-      FIELDS '{' '}' {
+      /* nothing */ {
+        $$ = new_vector();
+        vector_add($$, new_vector());
+    }
+    | FIELDS '{' '}' {
         $$ = new_vector();
         vector_add($$, new_vector());
     }
@@ -3328,7 +3342,7 @@ int main(int argc, char **argv) {
     /********************************/
     int i;
     FILE *fp;
-    vector *files = new_vector();
+    files = new_vector();
     vector_add(files, new_string("Object.h"));
     string *command = new_string("gcc ");
     

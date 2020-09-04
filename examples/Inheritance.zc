@@ -36,7 +36,6 @@ int main(void) {
     printf("add: expected(4), actual(%d)\n", obj "add"); /* `4` */
 
     obj "set a" 5;
-    printf("just set a to 5, a = `%d`\n", obj "get a");
     obj "set b" 3;
 
     int res = obj "add";
