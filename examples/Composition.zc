@@ -1,33 +1,44 @@
 #import "Object"
 
-struct Data {
-    int a;
-    int b;
-} Data;
-
-/* Inherit behaviour */
-object Composition implements Object((int): aValue, (int): bValue) {
+object Data implements Object((int): a, (int): b) {
     fields {
-        // struct Data data1;
         int a;
         int b;
     }
 
     init {
-        // self->data1 = (Data*)malloc(sizeof(Data));
-        self->a = aValue;
-        self->b = bValue;
+        self->a = a;
+        self->b = b;
     }
 
-    (void) self |> "set a" |> (int): a |> self->a = a;
-    (void) self |> "set b" |> (int): b |> self->b = b;
+    (int) self |> "get a" |> return self->a;
+    (int) self |> "get b" |> return self->b;
+    (int) self |> "set a" |> (int): a |> self->a = a;
+    (int) self |> "set b" |> (int): b |> self->b = b;
+}
 
-    (int) self |> "add" |> return self->a + self->b;
-    (int) self |> "sub" |> return self->a - self->b;
-    (int) self |> "mul" |> return self->a * self->b;
+/* Inherit behaviour */
+object Composition implements Object((int): aValue, (int): bValue) {
+    fields {
+        /* Compose other objects using void pointers */
+        void *data;
+    }
+
+    init {
+        self->data = Data "new" aValue, bValue;
+    }
+
+    (int) self |> "get2 a" |> return self->data "get a";
+    (int) self |> "get2 b" |> return self->data "get b";
+    (void) self |> "set2 a" |> (int): a |> self->data "set a" a;
+    (void) self |> "set2 b" |> (int): b |> self->data "set b" b;
+
+    (int) self |> "add" |> return (self->data "get a") + (self->data "get b");
+    (int) self |> "sub" |> return (self->data "get a") - (self->data "get b");
+    (int) self |> "mul" |> return (self->data "get a") * (self->data "get b");
     (int) self |> "div" |> {
-        if(self->b != 0)
-            return self->a / self->b;
+        if((self->data "get b") != 0)
+            return (self->data "get a") / (self->data "get b");
         return -1;
     }
     
@@ -36,13 +47,15 @@ object Composition implements Object((int): aValue, (int): bValue) {
 
 int main(void) {
     void *obj = Composition "new" 2, 2;
-    printf("%d\n", obj "add"); /* `4` */
+    printf("add: expected(4), actual(%d)\n", obj "add"); /* `4` */
 
-    obj "set a" 5;
-    obj "set b" 3;
+    obj "set2 a" 5;
+    printf("just set a to 5, a = `%d`\n", obj "get2 a");
+    obj "set2 b" 3;
+
 
     int res = obj "add";
-    printf("%d\n", res); /* `8` */
+    printf("res: expected(8), actual(%d)\n", res); /* `8` */
 
     return 0;
 }

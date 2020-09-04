@@ -2,27 +2,13 @@
 
 #include <stdlib.h>
 
-// model TestModel {
-//     int a;
-//     int b;
-// }
-
-// protocol TestProtocol implements Object {
-//     (void) self |> "test abstract no param";
-//     (void*) self |> "test abstract with 2 param" |> (void*): a, (void*): b;
-// }
-
 object Test implements Object((int): aValue, (int): bValue) {
     fields {
-        // TestModel data1;
-        // implements TestModel;
         int a;
         int b;
     }
 
     init {
-        // self->data1->a = aValue;
-        // self->data1->b = bValue;
         self->a = aValue;
         self->b = bValue;
     }
@@ -30,13 +16,13 @@ object Test implements Object((int): aValue, (int): bValue) {
     defer {}
 
     (void) self |> "test no param" |> self->a = 42;
-    // (void) self |> "test with 2 param" |> (int): a, (int): b |> self->a = a;
+    (void) self |> "test with 2 param" |> (int): a, (int): b |> self->a = a;
     (void) self |> "test compound statement no param" |> {
         self->a = 422;
     }
-    // (void) self |> "test compound statement one param" |> (int): a, (int): b |> {
-    //     self->a = a;
-    // }
+    (void) self |> "test compound statement one param" |> (int): a, (int): b |> {
+        self->a = a;
+    }
 }
 
 void main(void) {
