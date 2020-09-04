@@ -1713,11 +1713,7 @@ object_declaration:
     ;
 
 fields_declaration:
-      /* nothing */ {
-        $$ = new_vector();
-        vector_add($$, new_vector());
-    }
-    | FIELDS '{' '}' {
+      FIELDS '{' '}' {
         $$ = new_vector();
         vector_add($$, new_vector());
     }
