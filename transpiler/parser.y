@@ -2969,11 +2969,20 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "#ifndef __OBJECT_H_\n");
     string_add_str(obj, "#define __OBJECT_H_\n\n");
     string_add_str(obj, "#include <assert.h>\n");
+    string_add_str(obj, "#include <ctype.h>\n");
+    string_add_str(obj, "#include <errno.h>\n");
+    string_add_str(obj, "#include <float.h>\n");
+    string_add_str(obj, "#include <limits.h>\n");
+    string_add_str(obj, "#include <locale.h>\n");
+    string_add_str(obj, "/* #include <math.h> */\n");
+    string_add_str(obj, "#include <setjmp.h>\n");
+    string_add_str(obj, "#include <signal.h>\n");
+    string_add_str(obj, "#include <stdarg.h>\n");
+    string_add_str(obj, "#include <stddef.h>\n");
     string_add_str(obj, "#include <stdio.h>\n");
     string_add_str(obj, "#include <stdlib.h>\n");
     string_add_str(obj, "#include <string.h>\n");
-    string_add_str(obj, "#include <stdarg.h>\n");
-    string_add_str(obj, "#include <stddef.h>\n\n");
+    string_add_str(obj, "#include <time.h>\n");
     string_add_str(obj, "/** @param bool -> A 'big' enough size to hold both 1 and 0 **/\n");
     string_add_str(obj, "typedef unsigned char bool;\n");
     string_add_str(obj, "#define true 1\n");
@@ -3334,6 +3343,8 @@ void delete_file(string *filename) {
 }
 
 int main(int argc, char **argv) {
+    assert(argc > 1 && argv);
+
     /* Write the initial `Object.h` */
     __setup_initial_object();
     main_flag = false;
