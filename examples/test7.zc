@@ -26,5 +26,5 @@ object Test implements Object((int): aValue, (int): bValue) {
 }
 
 void main(void) {
-    return 0;
+    return;
 }
