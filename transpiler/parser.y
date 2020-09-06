@@ -2748,8 +2748,7 @@ preprocessor_control_line:
     }
     | IMPORT STRING {
         /* TODO -> ADDED HERE */
-        string *import_value = new_string("");
-        string_add_str(import_value, string_get($2));
+        string *import_value = string_dup($2);
 
         /* Remove quotations */
         string_skip(import_value, 1);
@@ -3345,9 +3344,19 @@ int main(int argc, char **argv) {
     files = new_vector();
     vector_add(files, new_string("Object.h"));
     string *command = new_string("gcc ");
+    int total_i_values = 2;
+
+    /* Capture mode of compilation */
+    string *mode = new_string(argv[1]);
+    if(!string_equals(mode, new_string("run"))
+    && !string_equals(mode, new_string("build"))
+    && !string_equals(mode, new_string("spec"))
+    && !string_equals(mode, new_string("init"))) {
+        mode = new_string("run");
+        total_i_values--;
+    }
     
     /* Generate the c files only */
-    int total_i_values = 1;
     bool do_not_compile = false;
     if(string_equals(new_string(argv[1]), new_string("-cfile"))) {
         total_i_values++;
@@ -3369,7 +3378,7 @@ int main(int argc, char **argv) {
         hashmap_add(typedef_names, "bool", (void*)true);
         /**/
     
-        printf("\033[38;5;206mCompiling: `%s`\033[0m\n", argv[i]);
+        /* printf("\033[38;5;206mCompiling: `%s`\033[0m\n", argv[i]); */
         yyin = fopen(argv[i], "r");
         translation = new_string("");
 
@@ -3400,8 +3409,14 @@ int main(int argc, char **argv) {
         /* @@@ */
     }
 
-    if(!do_not_compile && main_flag_was_set) {
-        printf("\033[38;5;206mExecuting: `%s`\033[0m\n", string_get(command));
+    if(!do_not_compile && main_flag_was_set && string_equals(mode, new_string("build"))) {
+        /* printf("\033[38;5;206mExecuting: `%s`\033[0m\n", string_get(command)); */
+        system(string_get(command));
+        vector_map(files, (lambda)delete_file);
+    }
+    else if(!do_not_compile && main_flag_was_set && string_equals(mode, new_string("run"))) {
+        string_add_str(command, " && ./a.out && rm a.out");
+        /* printf("\033[38;5;206mExecuting: `%s && ./a.out && rm a.out`\033[0m\n", string_get(command)); */
         system(string_get(command));
         vector_map(files, (lambda)delete_file);
     }
