@@ -1,0 +1,16 @@
+#!/bin/sh
+
+./zircon test1.zc
+./zircon test2.zc
+./zircon test3.zc
+./zircon test4.zc
+./zircon test5.zc
+./zircon test6.zc
+./zircon test7.zc
+./zircon test8.zc
+./zircon test9.zc
+./zircon Point2.zc
+./zircon Composition.zc
+./zircon Inheritance.zc
+./zircon objects/main2.zc
+./zircon objects/main.zc objects/circle.zc objects/point.zc
