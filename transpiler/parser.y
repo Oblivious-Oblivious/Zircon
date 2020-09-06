@@ -740,6 +740,7 @@ type_specifier:
     }
     | TYPEDEF_NAME { /* after defined as a typedef_name */
         $$ = string_dup($1);
+        string_add_char($$, ' ');
     }
     ;
 
