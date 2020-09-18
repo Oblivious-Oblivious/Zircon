@@ -1,0 +1,12 @@
+#include <stdio.h>
+
+typedef int dval;
+typedef double ival;
+
+int main(void) {
+    ival a = 42;
+    dval b = 2.4;
+
+    printf("integer: %d\n", a);
+    printf("double: %g\n", b);
+}

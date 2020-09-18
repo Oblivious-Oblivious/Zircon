@@ -1,5 +1,4 @@
 #import "Object"
-#import "Point"
 #import "Circle"
 
 object Any implements Object {
