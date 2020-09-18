@@ -3171,26 +3171,6 @@ static void display_hashmap(hashmap *map) {
 }
 /**/
 
-#ifdef _WIN32
-    #include <windows.h>
-
-    #define mkdir(dir, mode)      _mkdir(dir)
-    #define open(name, ...)       _open(name, __VA_ARGS__)
-    #define read(fd, buf, count)  _read(fd, buf, count)
-    #define close(fd)             _close(fd)
-    #define write(fd, buf, count) _write(fd, buf, count)
-    #define dup2(fd1, fd2)        _dup2(fd1, fd2)
-    #define unlink(file)          _unlink(file)
-    #define rmdir(dir)            _rmdir(dir)
-    #define getpid()              _getpid()
-    #define usleep(t)             Sleep((t)/1000)
-    #define sleep(t)              Sleep((t)*1000)
-#else
-    #include <sys/types.h>
-    #include <sys/stat.h>
-    #include <unistd.h>
-#endif
-
 void delete_file(string *filename) {
     remove(string_get(filename));
 }
