@@ -104,7 +104,6 @@ int sym_type(char *identifier) {
 "_Noreturn"                            tokenize(NORETURN);
 "_Static_assert"                       tokenize(STATIC_ASSERT);
 "_Thread_local"                        tokenize(THREAD_LOCAL);
-"__func__"                             tokenize(FUNC_NAME);
 
 "|>"                                   tokenize(SEND);
 "@"                                    tokenize('@');
@@ -177,24 +176,7 @@ int sym_type(char *identifier) {
 "//".*                                 ;
 
 "#import"                              tokenize(IMPORT);
-
-"#define"                              tokenize(DEFINE);
 "#include"                             tokenize(INCLUDE);
-"#ifdef"                               tokenize(IFDEF);
-"#undef"                               tokenize(UNDEF);
-"#ifndef"                              tokenize(IFNDEF);
-"#if"                                  tokenize(PRE_IF);
-"#elif"                                tokenize(PRE_ELIF);
-"#else"                                tokenize(PRE_ELSE);
-"#endif"                               tokenize(ENDIF);
-"#error"                               tokenize(ERROR);
-"#warning"                             tokenize(WARNING);
-"#pragma"                              tokenize(PRAGMA);
-"#line"                                tokenize(LINE);
-"#"                                    tokenize('#');
-"##"                                   tokenize(PRE_CONC);
-
-"defined"                              tokenize(DEFINED);
 
 {L}{A}*                                return tokenize_type();
 {L}{AD}*                               tokenize(HEADER);

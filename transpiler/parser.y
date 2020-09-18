@@ -1,41 +1,8 @@
 %{
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "stdboolean.h"
-#include "string.h"
-#include "hashmap.h"
-
-/* Parser definitions */
-int yylex(void);
-void yyerror(char*);
-
-void compile_file(char*);
-
-/* Result of the parsed file */
-string *translation;
-string *filename;
-bool main_flag = false;
-vector *files;
-vector *include_list_for_main;
-
-/* Hashmaps containing special identifiers */
-hashmap *typedef_names;
-hashmap *object_names;
-hashmap *enum_constants;
-
-/* Compilation data */
-int total_i_values;
-int argc;
-char **argv;
-bool main_flag_was_set;
-string *command;
-FILE *fp;
-bool do_not_compile;
-string *mode;
+#include "includes.h"
+#include "setups.h"
+#include "compiler.h"
 
 %}
 
@@ -73,12 +40,13 @@ string *mode;
 %type<String> inclusive_or_expression logical_and_expression logical_or_expression conditional_expression assignment_expression
 %type<String> assignment_operator expression constant_expression declaration declaration_specifiers init_declarator_list init_declarator
 %type<String> storage_class_specifier type_specifier struct_or_union_specifier struct_or_union struct_declaration_list struct_declaration
-%type<String> specifier_qualifier_list struct_declarator_list struct_declarator enum_specifier enumerator_list enumerator atomic_type_specifier
-%type<String> type_qualifier function_specifier alignment_specifier declarator direct_declarator pointer type_qualifier_list parameter_type_list
+%type<String> specifier_qualifier_list struct_declarator_list struct_declarator enum_specifier enumerator_list enumerator
+%type<String> type_qualifier function_specifier declarator direct_declarator pointer type_qualifier_list parameter_type_list
 %type<String> parameter_list parameter_declaration identifier_list type_name abstract_declarator direct_abstract_declarator initializer
-%type<String> initializer_list designation designator_list designator static_assert_declaration statement labeled_statement compound_statement
+%type<String> initializer_list designation designator_list designator statement labeled_statement compound_statement
 %type<String> block_item_list block_item expression_statement selection_statement iteration_statement jump_statement translation_unit
 %type<String> external_declaration function_definition declaration_list
+%type<String> static_assert_declaration atomic_type_specifier alignment_specifier
 
 %type<String> object object_specifier self_or_super declaration_specifiers_or_pointer
 %type<Vector> constructor_declaration destructor_declaration message_declaration_list message_declaration model_declaration_list
@@ -1733,11 +1701,7 @@ object_declaration:
     ;
 
 fields_declaration:
-      /* nothing */ {
-        $$ = new_vector();
-        vector_add($$, new_vector());
-    }
-    | FIELDS '{' '}' {
+      FIELDS '{' '}' {
         $$ = new_vector();
         vector_add($$, new_vector());
     }
@@ -2081,7 +2045,7 @@ type_qualifier:
         $$ = new_string("volatile ");
     }
     | ATOMIC {
-        $$ = new_string("atomic ");
+        $$ = new_string("_Atomic ");
     }
     ;
 
@@ -2090,7 +2054,7 @@ function_specifier:
         $$ = new_string("inline ");
     }
     | NORETURN {
-        $$ = new_string("noreturn ");
+        $$ = new_string("_Noreturn ");
     }
     ;
 
@@ -2795,437 +2759,6 @@ declaration_list:
     ;
 
 %%
-
-extern FILE *yyin;
-
-#define warning(s, t) do { \
-    fprintf(stderr, "%s\n", s); \
-    if(t) fprintf(stderr, "%s\n", t); \
-} while(0);
-
-void yyerror(char *s) {
-    fflush(stdout);
-    warning(s, (char*)0);
-    printf("`%s`\n", string_get(translation));
-    /* exit(1); */
-    /* yyparse(); */
-}
-
-static void __setup_hashmaps(void) {
-    typedef_names = new_hashmap();
-    enum_constants = new_hashmap();
-    object_names = new_hashmap();
-}
-
-static void __setup_initial_object(void) {
-    string *obj = new_string("");
-    string_add_str(obj, "#ifndef __OBJECT_H_\n");
-    string_add_str(obj, "#define __OBJECT_H_\n\n");
-    string_add_str(obj, "#include <assert.h>\n");
-    string_add_str(obj, "#include <ctype.h>\n");
-    string_add_str(obj, "#include <errno.h>\n");
-    string_add_str(obj, "#include <float.h>\n");
-    string_add_str(obj, "#include <limits.h>\n");
-    string_add_str(obj, "#include <locale.h>\n");
-    string_add_str(obj, "/* #include <math.h> */\n");
-    string_add_str(obj, "#include <setjmp.h>\n");
-    string_add_str(obj, "#include <signal.h>\n");
-    string_add_str(obj, "#include <stdarg.h>\n");
-    string_add_str(obj, "#include <stddef.h>\n");
-    string_add_str(obj, "#include <stdio.h>\n");
-    string_add_str(obj, "#include <stdlib.h>\n");
-    string_add_str(obj, "#include <string.h>\n");
-    string_add_str(obj, "#include <time.h>\n");
-    string_add_str(obj, "/** @param bool -> A 'big' enough size to hold both 1 and 0 **/\n");
-    string_add_str(obj, "typedef unsigned char bool;\n");
-    string_add_str(obj, "#define true 1\n");
-    string_add_str(obj, "#define false 0\n\n");
-    string_add_str(obj, "struct Object {\n");
-    string_add_str(obj, "    struct Class *class;\n");
-    string_add_str(obj, "};\n");
-    string_add_str(obj, "struct Class {\n");
-    string_add_str(obj, "    struct Object _;\n");
-    string_add_str(obj, "    char *name;\n");
-    string_add_str(obj, "    struct Class *super;\n");
-    string_add_str(obj, "    size_t size;\n");
-    string_add_str(obj, "    void *(*ctor)(void *self, va_list *app);\n");
-    string_add_str(obj, "    void *(*dtor)(void *self);\n");
-    string_add_str(obj, "    bool (*differ)(void *self, void *other);\n");
-    string_add_str(obj, "    bool (*puto)(void *self, FILE *fd);\n");
-
-    string_add_str(obj, "    void *(*class)(void *self);\n");
-    string_add_str(obj, "    void *(*superclass)(void *self);\n");
-    string_add_str(obj, "    bool (*is_a)(void *self, char *other);\n");
-    string_add_str(obj, "    char *(*to_string)(void *self);\n");
-    string_add_str(obj, "};\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *classOf(void *_self) {\n");
-    string_add_str(obj, "    struct Object *self = _self;\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && self && self->class);\n");
-    string_add_str(obj, "    return self->class;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static size_t sizeOf(void *_self) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "    return class->size;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *super(void *_self) {\n");
-    string_add_str(obj, "    struct Class *self = _self;\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && self && self->super);\n");
-    string_add_str(obj, "    return self->super;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_ctor(void *_self, va_list *app) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "    \n");
-    string_add_str(obj, "    assert(class->ctor);\n");
-    string_add_str(obj, "    return class->ctor(_self, app);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_super_ctor(void *_class, void *_self, va_list *app) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && superclass->ctor);\n");
-    string_add_str(obj, "    return superclass->ctor(_self, app);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_dtor(void *_self) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(class->dtor);\n");
-    string_add_str(obj, "    return class->dtor(_self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_super_dtor(void *_class, void *_self) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && superclass->dtor);\n");
-    string_add_str(obj, "    return superclass->dtor(_self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_differ(void *_self, void *other) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(class->differ);\n");
-    string_add_str(obj, "    return class->differ(_self, other);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_super_differ(void *_class, void *_self, void *other) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && superclass->differ);\n");
-    string_add_str(obj, "    return superclass->differ(_self, other);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_puto(void *_self, FILE *fd) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(class->puto);\n");
-    string_add_str(obj, "    return class->puto(_self, fd);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_super_puto(void *_class, void *_self, FILE *fd) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && superclass->puto);\n");
-    string_add_str(obj, "    return superclass->puto(_self, fd);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_class(void *_self) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(class->class);\n");
-    string_add_str(obj, "    return class->class(_self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_super_class(void *_class, void *_self) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && superclass->class);\n");
-    string_add_str(obj, "    return superclass->class(_self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_superclass(void *_self) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(class->superclass);\n");
-    string_add_str(obj, "    return class->superclass(_self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *zircon_super_superclass(void *_class, void *_self) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && superclass->superclass);\n");
-    string_add_str(obj, "    return superclass->superclass(_self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_is_a(void *_self, char *other) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(class->is_a);\n");
-    string_add_str(obj, "    return class->is_a(_self, other);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "bool zircon_super_is_a(void *_class, void *_self, char *other) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && superclass->is_a);\n");
-    string_add_str(obj, "    return superclass->is_a(_self, other);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "char *zircon_to_string(void *_self) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(class->to_string);\n");
-    string_add_str(obj, "    return class->to_string(_self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "char *zircon_super_to_string(void *_class, void *_self) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(_self && superclass->to_string);\n");
-    string_add_str(obj, "    return superclass->to_string(_self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *Object_ctor(void *_self, va_list *app) {\n");
-    string_add_str(obj, "    return _self;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *Object_dtor(void *_self) {\n");
-    string_add_str(obj, "    return _self;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static bool Object_differ(void *_self, void *other) {\n");
-    string_add_str(obj, "    return _self != other;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static bool Object_puto(void *_self, FILE *fd) {\n");
-    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
-    string_add_str(obj, "    return fprintf(fd, \"%s at %p\\n\", self->name, _self);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *Object_class(void *_self) {\n");
-    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
-    string_add_str(obj, "    return self;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *Object_superclass(void *_self) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_self);\n");
-    string_add_str(obj, "    return superclass;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static bool Object_is_a(void *_self, char *name) {\n");
-    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
-    string_add_str(obj, "    return !strcmp(self->name, name);\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static char *Object_to_string(void *_self) {\n");
-    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
-    string_add_str(obj, "    char *buf = (char*)malloc(sizeof(char) * 1024);\n");
-    string_add_str(obj, "    sprintf(buf, \"@%s\", self->name);\n");
-    string_add_str(obj, "    return buf;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *Class_ctor(void *_self, va_list *app) {\n");
-    string_add_str(obj, "    struct Class *self = _self;\n");
-    string_add_str(obj, "    size_t offset = offsetof(struct Class, ctor);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    self->name = va_arg(*app, char*);\n");
-    string_add_str(obj, "    self->super = va_arg(*app, struct Class*);\n");
-    string_add_str(obj, "    self->size = va_arg(*app, size_t);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    assert(self->super);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    memcpy((char*)self + offset, (char*)self->super + offset, sizeOf(self->super) - offset);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    typedef void (*voidf) ();\n");
-    string_add_str(obj, "    voidf selector;\n");
-    string_add_str(obj, "#ifdef va_copy\n");
-    string_add_str(obj, "    va_list ap;\n");
-    string_add_str(obj, "    va_copy(ap, *app);\n");
-    string_add_str(obj, "#else\n");
-    string_add_str(obj, "    va_list ap = *app;\n");
-    string_add_str(obj, "#endif\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    while((selector = va_arg(ap, voidf))) {\n");
-    string_add_str(obj, "        voidf method = va_arg(ap, voidf);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "        if(selector == (voidf)zircon_ctor)\n");
-    string_add_str(obj, "            *(voidf*)&self->ctor = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)zircon_dtor)\n");
-    string_add_str(obj, "            *(voidf*)&self->dtor = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)zircon_differ)\n");
-    string_add_str(obj, "            *(voidf*)&self->differ = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)zircon_puto)\n");
-    string_add_str(obj, "            *(voidf*)&self->puto = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)zircon_class)\n");
-    string_add_str(obj, "            *(voidf*)&self->class = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)zircon_superclass)\n");
-    string_add_str(obj, "            *(voidf*)&self->superclass = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)zircon_is_a)\n");
-    string_add_str(obj, "            *(voidf*)&self->is_a = method;\n");
-    string_add_str(obj, "        else if(selector == (voidf)zircon_to_string)\n");
-    string_add_str(obj, "            *(voidf*)&self->to_string = method;\n");
-    string_add_str(obj, "    }\n");
-    string_add_str(obj, "#ifdef va_copy\n");
-    string_add_str(obj, "    va_end(ap);\n");
-    string_add_str(obj, "#endif\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    return self;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *Class_dtor(void *_self) {\n");
-    string_add_str(obj, "    struct Class *self = _self;\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    fprintf(stderr, \"%s: cannot destroy class\\n\", self->name);\n");
-    string_add_str(obj, "    return 0;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void *zircon_new(void *_class, ...) {\n");
-    string_add_str(obj, "    struct Class *class = _class;\n");
-    string_add_str(obj, "    assert(class && class->size);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    struct Object *object;\n");
-    string_add_str(obj, "    va_list ap;\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    object = (struct Object*)calloc(1, class->size);\n");
-    string_add_str(obj, "    assert(object);\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "    object->class = class;\n");
-    string_add_str(obj, "    va_start(ap, _class);\n");
-    string_add_str(obj, "        object = zircon_ctor(object, &ap);\n");
-    string_add_str(obj, "    va_end(ap);\n");
-    string_add_str(obj, "    return object;\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static void zircon_defer(void *_self) {\n");
-    string_add_str(obj, "    if(_self) free(zircon_dtor(_self));\n");
-    string_add_str(obj, "}\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "static struct Class object [] = {\n");
-    string_add_str(obj, "    {\n");
-    string_add_str(obj, "        { object + 1 },\n");
-    string_add_str(obj, "        \"Object\",\n");
-    string_add_str(obj, "        object,\n");
-    string_add_str(obj, "        sizeof(struct Object),\n");
-    string_add_str(obj, "        Object_ctor,\n");
-    string_add_str(obj, "        Object_dtor,\n");
-    string_add_str(obj, "        Object_differ,\n");
-    string_add_str(obj, "        Object_puto,\n");
-    string_add_str(obj, "        Object_class,\n");
-    string_add_str(obj, "        Object_superclass,\n");
-    string_add_str(obj, "        Object_is_a,\n");
-    string_add_str(obj, "        Object_to_string\n");
-    string_add_str(obj, "    },\n");
-    string_add_str(obj, "    {\n");
-    string_add_str(obj, "        { object + 1 },\n");
-    string_add_str(obj, "        \"Class\",\n");
-    string_add_str(obj, "        object,\n");
-    string_add_str(obj, "        sizeof(struct Class),\n");
-    string_add_str(obj, "        Class_ctor,\n");
-    string_add_str(obj, "        Class_dtor,\n");
-    string_add_str(obj, "        Object_differ,\n");
-    string_add_str(obj, "        Object_puto,\n");
-    string_add_str(obj, "        Object_class,\n");
-    string_add_str(obj, "        Object_superclass,\n");
-    string_add_str(obj, "        Object_is_a,\n");
-    string_add_str(obj, "        Object_to_string\n");
-    string_add_str(obj, "    }\n");
-    string_add_str(obj, "};\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "void *Object = object;\n");
-    string_add_str(obj, "void *Class = object + 1;\n");
-    string_add_str(obj, "\n");
-    string_add_str(obj, "#endif\n");
-
-    /*********************************/
-    FILE *fp = fopen("Object.h", "w");
-    fprintf(fp, "%s", string_get(obj));
-    fclose(fp);
-    /*********************************/
-}
-
-static void write_init_calls(char *o) {
-    /* If the node is `Object` we dont need to initialize it */
-    if(string_equals(new_string(o), new_string("Object"))) return;
-
-    string_add_str(translation, "    __init_");
-    string_add_str(translation, o);
-    string_add_str(translation, "();\n");
-}
-void __setup_init_objects(void) {
-    string_add_str(translation, "void __setup_objects(void) {\n");
-    hashmap_map(object_names, (lambda)write_init_calls, KEYS);
-    string_add_str(translation, "}\n");
-}
-
-/**/
-static void display_strings(char *item) {
-    printf("    %s\n", item);
-}
-static void display_hashmap(hashmap *map) {
-    hashmap_map(map, (lambda)display_strings, KEYS);
-}
-/**/
-
-void delete_file(string *filename) {
-    remove(string_get(filename));
-}
-
-void add_includes_to_tranlation(string *inc) {
-    string_add_str(translation, "#include \"");
-    string_add_str(translation, string_get(inc));
-    string_add_str(translation, "\"\n");
-}
-
-void compile_file(char *file_to_compile) {
-    int i;
-    for(i = total_i_values; i < argc; i++) {
-
-    __setup_hashmaps();
-    /**/
-    hashmap_add(typedef_names, "size_t", (void*)true);
-    hashmap_add(typedef_names, "bool", (void*)true);
-    /**/
-    
-    /* printf("\033[38;5;206mCompiling: `%s`\033[0m\n", argv[i]); */
-    yyin = fopen(argv[i], "r");
-    /* printf("\033[38;5;206mCompiling: `%s`\033[0m\n", file_to_compile); */
-    /* yyin = fopen(file_to_compile, "r"); */
-    translation = new_string("");
-
-    /* Parse the text */
-    yyparse();
-
-    /* Write the init nodes */
-    if(main_flag) {
-        main_flag_was_set = true;
-        vector_map(include_list_for_main, (lambda)add_includes_to_tranlation);
-        __setup_init_objects();
-        filename = new_string("__zircon_main.c");
-        string_add_str(command, string_get(filename));
-    }
-
-    vector_add(files, filename);
-
-    fp = fopen(string_get(filename), "w");
-    fprintf(fp, "%s", string_get(translation));
-    fclose(fp);
-
-    /* @@@ */
-    /* printf("\n\033[38;5;206mtypedef_names\033[0m\n");
-    display_hashmap(typedef_names);
-    printf("\n\033[38;5;206menum_constants\033[0m\n");
-    display_hashmap(enum_constants);
-    printf("\n\033[38;5;206mobject_names\033[0m\n");
-    display_hashmap(object_names); */
-    /* @@@ */
-
-    }
-}
 
 int main(int _argc, char **_argv) {
     assert(_argc > 1 && _argv);

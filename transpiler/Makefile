@@ -5,6 +5,7 @@ OUTPUT = zircon
 
 FLAGS =
 WARNINGS = -Wno-int-conversion
+#YACC_FLAGS = -Wcounterexamples
 YACC_WARNINGS =
 HEADERS =
 LIBS =
@@ -21,7 +22,7 @@ flex:
 	flex $(LEX)
 
 bison:
-	bison -d $(YACC_WARNINGS) $(YACC)
+	bison -d $(YACC_WARNINGS) $(YACC_FLAGS) $(YACC)
 
 compiler: flex bison
 	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
