@@ -2696,17 +2696,19 @@ preprocessor_directive:
 preprocessor_control_line:
       INCLUDE '<' HEADER '>' {
         $$ = new_string("\n#include <");
+        $3 = remove_linefeed($3);
         string_add_str($$, string_get($3));
         string_add_str($$, ">\n");
     }
     | INCLUDE STRING {
         $$ = new_string("\n#include ");
+        $2 = remove_linefeed($2);
         string_add_str($$, string_get($2));
         string_add_char($$, '\n');
         /* Newline is added on the string */
     }
     | IMPORT STRING {
-        /* TODO -> ADDED HERE */
+        $2 = remove_linefeed($2);
         string *import_value = string_dup($2);
 
         /* Remove quotations */

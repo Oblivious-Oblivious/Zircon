@@ -46,6 +46,7 @@ vector *string_split(string *str, string *delimeter);
 string *string_substring(string *str, size_t from, size_t __to);
 string *string_iterate(string *sb, lambda apply);
 string *string_map(string *sb, stringlambda modifier);
+string *string_filter(string *sb, stringlambda filter);
 char *string_identifier(string *sb);
 
 #endif

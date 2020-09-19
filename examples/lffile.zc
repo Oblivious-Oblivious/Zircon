@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #import "Object"
 
 object LFFile implements Object {
@@ -9,14 +11,14 @@ object LFFile implements Object {
         self->a = 42;
     }
 
-    (void) self |> "display" |> {
+    (int) self |> "display" |> {
         printf("Returning self->a = %d\n", self->a);
         return self->a;
     }
 }
 
 int main(void) {
-    void *obj = LFFILE "new";
+    void *obj = LFFile "new";
 
     obj "display";
 }

@@ -199,6 +199,20 @@ string *string_map(string *sb, stringlambda modifier) {
     return sb_dup;
 }
 
+string *string_filter(string *sb, stringlambda filter) {
+    if(sb == NULL || filter == NULL) return NULL;
+
+    char *sb_str = string_get(sb);
+    string *sb_dup = new_string("");
+
+    size_t i;
+    for(i = 0; i < string_length(sb); i++)
+        if(filter(sb_str[i]))
+            string_add_char(sb_dup, sb_str[i]);
+
+    return sb_dup;
+}
+
 char *string_identifier(string *sb) {
     if(sb == NULL) return NULL;
 

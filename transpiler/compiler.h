@@ -18,14 +18,19 @@ void yyerror(char *s) {
     /* yyparse(); */
 }
 
-/**/
+bool fix_lf(char c) {
+    return (c != '\r' && c != '\n');
+}
+string *remove_linefeed(string *str) {
+    return string_filter(str, (stringlambda)fix_lf);
+}
+
 static void display_strings(char *item) {
     printf("    %s\n", item);
 }
 static void display_hashmap(hashmap *map) {
     hashmap_map(map, (lambda)display_strings, KEYS);
 }
-/**/
 
 void delete_file(string *filename) {
     remove(string_get(filename));
