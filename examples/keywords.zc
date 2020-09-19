@@ -1,0 +1,147 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <complex.h>
+
+/* enum */
+enum suit {
+    hearts,
+    spades,
+    clubs,
+    diamonds
+};
+
+/* struct */
+struct student {
+    char name[80];
+    float marks;
+    int age;
+} s1, s2;
+
+/* union */
+union student_union {
+    char name[80];
+    float marks;
+    int age;
+};
+
+/* void */
+void test_function(void) {}
+
+/* inline */
+inline void call_inline_function(void) {
+    int inlined_value = 42;
+}
+
+/* _Generic */
+char *call_generic(void *v) {
+    return _Generic((v),
+        int: "int",
+        char: "char",
+        char*: "char*"
+    );
+}
+
+/* _Noreturn */
+_Noreturn void call_to_no_return(void) {
+    exit(0);
+}
+
+/* extern */
+extern int extern_value;
+
+/* volatile */
+const volatile int hardware_value;
+
+// /* typedef */
+// typedef float kg;
+// kg bear, tiger;
+
+int main(void) {
+    /* auto */
+    auto int var1;
+
+    /* int */
+    int i;
+
+    /* for, break, continue */
+    for(i = 0; i < 10; i++) {
+        if(i == 3) continue;
+        if(i == 7) break;
+    }
+
+    /* switch, case, default */
+    switch('5') {
+        case '1':
+            break;
+        default:
+            break;
+    }
+
+    /* char */
+    char c1;
+
+    /* const */
+    const int a = 5;
+
+    /* do, while */
+    do
+        i++;
+    while(i < 10);
+
+    /* double, float */
+    float number;
+    double long_number;
+
+    /* if, else */
+    if(1 == 1);
+    else;
+
+    // /* goto */
+    // goto label;
+    // label:
+
+    /* short, long, signed, unsigned */
+    short int small_integer;
+    long int long_integer;
+    signed int normal_integer;
+    unsigned int positive_integer;
+
+    /* register */
+    register int fast_int;
+
+    /* return */
+    if(1 == 0) return 1;
+
+    /* sizeof */
+    unsigned long general_size = sizeof(void*);
+
+    /* static */
+    static int var; /* value persists to the end of the program */
+
+    /* _Bool */
+    _Bool true_value = true;
+    _Bool false_value = false;
+
+    /* _Complex */
+    double _Complex z = 1 + 2*I;
+
+    /* _Imaginary */
+    double _Imaginary t = 3*I;
+    t = 1/t;
+
+    /* restrict */
+    restrict int *ptr;
+
+    /* _Alignas */
+    _Alignas(2048) char *ptr_value;
+
+    /* _Alignof */
+    printf("Align of char: %zu\n", _Alignof(char));
+
+    /* _Atomic */
+    _Atomic int account;
+
+    /* _Static_assert */
+    _Static_assert(2 + 2 == 4, "Ok");
+}

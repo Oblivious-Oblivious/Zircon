@@ -1,6 +1,7 @@
 #import "Object"
 
 object Test implements Object {
+    fields {}
 }
 
 int main(void) {
