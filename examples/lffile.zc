@@ -1,0 +1,22 @@
+#import "Object"
+
+object LFFile implements Object {
+    fields {
+        int a;
+    }
+
+    init {
+        self->a = 42;
+    }
+
+    (void) self |> "display" |> {
+        printf("Returning self->a = %d\n", self->a);
+        return self->a;
+    }
+}
+
+int main(void) {
+    void *obj = LFFILE "new";
+
+    obj "display";
+}
