@@ -29,5 +29,5 @@ compiler: flex bison
 	cp $(OUTPUT) ../examples/
 
 clean:
-	rm -f ../examples/objects/$(OUTPUT)
+	rm -f ../examples/$(OUTPUT)
 	rm -f $(OUTPUT) $(LEX_OUT) $(YACC_OUT).c $(YACC_OUT).h out.c out Object.h
