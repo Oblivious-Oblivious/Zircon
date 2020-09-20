@@ -340,9 +340,9 @@ static void __setup_initial_object(void) {
     /*********************************/
 }
 
-static void write_init_calls(char *o) {
+static void *write_init_calls(void *o) {
     /* If the node is `Object` we dont need to initialize it */
-    if(string_equals(new_string(o), new_string("Object"))) return;
+    if(string_equals(new_string(o), new_string("Object"))) return NULL;
 
     string_add_str(translation, "    __init_");
     string_add_str(translation, o);

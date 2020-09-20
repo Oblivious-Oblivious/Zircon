@@ -5,7 +5,7 @@ typedef struct sth {
     int a;
 } sth;
 
-typedef void* (*lambda)();
+typedef void* (*lambda)(void*);
 
 int main(void) {
     sth *test = (sth*)malloc(sizeof(sth));

@@ -17,7 +17,12 @@ int yylex(void);
 int yyparse(void);
 void yyerror(char*);
 
-void compile_file(char*);
+// void compile_file(char*);
+void compile_file(void);
+bool fix_lf(char c);
+string *remove_linefeed(string *str);
+void *delete_file(string *filename);
+void *add_includes_to_tranlation(void *inc);
 
 /* Result of the parsed file */
 string *translation;

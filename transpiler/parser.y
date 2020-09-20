@@ -787,7 +787,7 @@ object_specifier:
             vector_add(files, filename);
         }
 
-        int i;
+        size_t i;
         for(i = 0; i < vector_length(object_fields); i++) {
             vector *field = vector_get(object_fields, i);
             string_add_str($$, "    ");
@@ -844,7 +844,7 @@ object_specifier:
                     else {
                         string_add_str($$, ")(void *self");
                         vector *message_fields = vector_get(message, 3);
-                        int j;
+                        size_t j;
                         for(j = 0; j < vector_length(message_fields); j++) {
                             string_add_str($$, ", ");
                             vector *current_message_fields = vector_get(message_fields, j);
@@ -888,7 +888,7 @@ object_specifier:
                     else {
                         string_add_str($$, "(void *_self");
                         vector *message_fields = vector_get(message, 3);
-                        int j;
+                        size_t j;
                         for(j = 0; j < vector_length(message_fields); j++) {
                             string_add_str($$, ", ");
                             vector *current_message_fields = vector_get(message_fields, j);
@@ -909,7 +909,7 @@ object_specifier:
                     string_add_str($$, string_get(name));
                     string_add_str($$, "(_self");
                     vector *message_fields = vector_get(message, 3);
-                    int j;
+                    size_t j;
                     for(j = 0; j < vector_length(message_fields); j++) {
                         string_add_str($$, ", ");
                         vector *current_message_fields = vector_get(message_fields, j);
@@ -930,7 +930,7 @@ object_specifier:
                     else {
                         string_add_str($$, "(void *_class, void *_self");
                         vector *message_fields = vector_get(message, 3);
-                        int j;
+                        size_t j;
                         for(j = 0; j < vector_length(message_fields); j++) {
                             string_add_str($$, ", ");
                             vector *current_message_fields = vector_get(message_fields, j);
@@ -989,7 +989,7 @@ object_specifier:
             string_add_str($$, string_get(method_on_new));
             /***********************************************/
             
-            string_add_str($$, "    return self;\n};\n");
+            string_add_str($$, "    return self;\n}\n");
         }
         if(destructor_is_overriden) {
             string_add_str($$, "void *");
@@ -1001,7 +1001,7 @@ object_specifier:
             string_add_str($$, string_get($2));
             string_add_str($$, ", _self);\n\n");
             string_add_str($$, string_get(method_on_defer));
-            string_add_str($$, "\n    return 0;\n};\n");
+            string_add_str($$, "\n    return 0;\n}\n");
         }
 
         for(i = 0; i < vector_length(object_messages); i++) {
@@ -1019,12 +1019,12 @@ object_specifier:
             else {
                 string_add_str($$, "(void *_self");
                 vector *message_fields = vector_get(message, 3);
-                int j;
+                size_t j;
                 for(j = 0; j < vector_length(message_fields); j++) {
                     string_add_str($$, ", ");
                     vector *current_message_fields = vector_get(message_fields, j);
                     string_add_str($$, string_get(vector_get(current_message_fields, 0)));
-                    bool is_message_an_object = vector_get(current_message_fields, 2);
+                    void *is_message_an_object = vector_get(current_message_fields, 2);
                     if(is_message_an_object)
                         string_add_char($$, '_');
                     string_add_str($$, string_get(vector_get(current_message_fields, 1)));
@@ -1040,12 +1040,12 @@ object_specifier:
             string_add_str($$, string_get($4));
             string_add_str($$, "*)self;\n\n");
             vector *message_fields = vector_get(message, 3);
-            int j;
+            size_t j;
             for(j = 0; j < vector_length(message_fields); j++) {
                 /* Check for object parameter */
                 vector *current_message_fields = vector_get(message_fields, j);
                 string *current_message_name = vector_get(current_message_fields, 1);
-                bool is_message_an_object = vector_get(current_message_fields, 2);
+                void *is_message_an_object = vector_get(current_message_fields, 2);
                 if(is_message_an_object) {
                     string_add_str($$, "struct ");
                     string_add_str($$, string_get($2));
@@ -1253,7 +1253,7 @@ object_specifier:
         string_add_str($$, string_get($4));
         string_add_str($$, " _;\n");
 
-        int i;
+        size_t i;
         for(i = 0; i < vector_length(object_fields); i++) {
             vector *field = vector_get(object_fields, i);
             string_add_str($$, "    ");
@@ -1310,7 +1310,7 @@ object_specifier:
                     else {
                         string_add_str($$, ")(void *self");
                         vector *message_fields = vector_get(message, 3);
-                        int j;
+                        size_t j;
                         for(j = 0; j < vector_length(message_fields); j++) {
                             string_add_str($$, ", ");
                             vector *current_message_fields = vector_get(message_fields, j);
@@ -1354,7 +1354,7 @@ object_specifier:
                     else {
                         string_add_str($$, "(void *_self");
                         vector *message_fields = vector_get(message, 3);
-                        int j;
+                        size_t j;
                         for(j = 0; j < vector_length(message_fields); j++) {
                             string_add_str($$, ", ");
                             vector *current_message_fields = vector_get(message_fields, j);
@@ -1375,7 +1375,7 @@ object_specifier:
                     string_add_str($$, string_get(name));
                     string_add_str($$, "(_self");
                     vector *message_fields = vector_get(message, 3);
-                    int j;
+                    size_t j;
                     for(j = 0; j < vector_length(message_fields); j++) {
                         string_add_str($$, ", ");
                         vector *current_message_fields = vector_get(message_fields, j);
@@ -1396,7 +1396,7 @@ object_specifier:
                     else {
                         string_add_str($$, "(void *_class, void *_self");
                         vector *message_fields = vector_get(message, 3);
-                        int j;
+                        size_t j;
                         for(j = 0; j < vector_length(message_fields); j++) {
                             string_add_str($$, ", ");
                             vector *current_message_fields = vector_get(message_fields, j);
@@ -1454,7 +1454,7 @@ object_specifier:
 
             /***********************************************/
             vector *parameters = $6;
-            int k;
+            size_t k;
             for(k = 0; k < vector_length(parameters); k++) {
                 vector *current_parameter = vector_get(parameters, k);
                 string_add_str($$, string_get(vector_get(current_parameter, 0)));
@@ -1478,7 +1478,7 @@ object_specifier:
             string_add_str($$, string_get($2));
             string_add_str($$, ", _self);\n\n");
             string_add_str($$, string_get(method_on_defer));
-            string_add_str($$, "\n    return 0;\n};\n");
+            string_add_str($$, "\n    return 0;\n}\n");
         }
 
         for(i = 0; i < vector_length(object_messages); i++) {
@@ -1496,12 +1496,12 @@ object_specifier:
             else {
                 string_add_str($$, "(void *_self");
                 vector *message_fields = vector_get(message, 3);
-                int j;
+                size_t j;
                 for(j = 0; j < vector_length(message_fields); j++) {
                     string_add_str($$, ", ");
                     vector *current_message_fields = vector_get(message_fields, j);
                     string_add_str($$, string_get(vector_get(current_message_fields, 0)));
-                    bool is_message_an_object = vector_get(current_message_fields, 2);
+                    void *is_message_an_object = vector_get(current_message_fields, 2);
                     if(is_message_an_object)
                         string_add_char($$, '_');
                     string_add_str($$, string_get(vector_get(current_message_fields, 1)));
@@ -1517,12 +1517,12 @@ object_specifier:
             string_add_str($$, string_get($4));
             string_add_str($$, "*)self;\n\n");
             vector *message_fields = vector_get(message, 3);
-            int j;
+            size_t j;
             for(j = 0; j < vector_length(message_fields); j++) {
                 /* Check for object parameter */
                 vector *current_message_fields = vector_get(message_fields, j);
                 string *current_message_name = vector_get(current_message_fields, 1);
-                bool is_message_an_object = vector_get(current_message_fields, 2);
+                void *is_message_an_object = vector_get(current_message_fields, 2);
                 if(is_message_an_object) {
                     string_add_str($$, "struct ");
                     string_add_str($$, string_get($2));
@@ -1736,7 +1736,7 @@ message_declaration_list:
     }
     | message_declaration_list message_declaration {
         $$ = new_vector();
-        int i;
+        size_t i;
         for(i = 0; i < vector_length($1); i++)
             vector_add($$, vector_get($1, i));
         vector_add($$, $2);
@@ -1746,6 +1746,8 @@ message_declaration_list:
 message_declaration:
       '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND compound_statement {
         $$ = new_vector();
+        if(string_equals($2, new_string("void ")))
+            $2 = new_string("void* ");
         vector_add($$, $2); /* return value */
         vector_add($$, $4); /* sender */
         vector_add($$, $6); /* name */
@@ -1754,7 +1756,9 @@ message_declaration:
     }
     | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND block_item {
         $$ = new_vector();
-        vector_add($$, $2); /* return vaule */
+        if(string_equals($2, new_string("void ")))
+            $2 = new_string("void* ");
+        vector_add($$, $2); /* return value */
         vector_add($$, $4); /* sender */
         vector_add($$, $6); /* name */
         vector_add($$, new_vector()); /* variable entries */
@@ -1762,6 +1766,8 @@ message_declaration:
     }
     | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND object_parameter_type_list SEND compound_statement {
         $$ = new_vector();
+        if(string_equals($2, new_string("void ")))
+            $2 = new_string("void* ");
         vector_add($$, $2); /* return value */
         vector_add($$, $4); /* sender */
         vector_add($$, $6); /* name */
@@ -1770,6 +1776,8 @@ message_declaration:
     }
     | '(' declaration_specifiers_or_pointer ')' self_or_super SEND STRING SEND object_parameter_type_list SEND block_item {
         $$ = new_vector();
+        if(string_equals($2, new_string("void ")))
+            $2 = new_string("void* ");
         vector_add($$, $2); /* return value */
         vector_add($$, $4); /* sender */
         vector_add($$, $6); /* name */
@@ -1895,7 +1903,7 @@ object_parameter_type:
         $$ = new_vector();
         vector_add($$, $2);   /* type */
         vector_add($$, $6);   /* name */
-        vector_add($$, true); /* is object */
+        vector_add($$, (void*)true); /* is object */
     }
 
 model_declaration_list:
@@ -2800,10 +2808,12 @@ int main(int _argc, char **_argv) {
     include_list_for_main = new_vector();
 
     /********************************/
-    int i;
     files = new_vector();
     vector_add(files, new_string("Object.h"));
     command = new_string("gcc ");
+    string_add_str(command, "-Wno-empty-body -fno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable -Wno-return-type -Wno-missing-prototypes -Wno-unused-parameter -Wno-unused-function -Wno-cast-function-type ");
+    string_add_str(command, "-march=native -O2 -Wall -Wextra -Werror -pedantic -pedantic-errors -Wpedantic ");
+
     total_i_values = 2;
 
     /* Capture mode of compilation */
@@ -2831,7 +2841,8 @@ int main(int _argc, char **_argv) {
         total_i_values++;
     }
 
-    compile_file(argv[total_i_values]);
+    /* compile_file(argv[total_i_values]); */
+    compile_file();
 
     if(!do_not_compile && main_flag_was_set && string_equals(mode, new_string("build"))) {
         /* printf("\033[38;5;206mExecuting: `%s`\033[0m\n", string_get(command)); */

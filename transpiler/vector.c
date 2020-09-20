@@ -31,20 +31,20 @@ void vector_add(vector *v, void *item) {
 
 void vector_set(vector *v, size_t index, void *item) {
     if(v == NULL) return;
-    if(index >= 0 && index < v->length)
+    if(index < v->length)
         v->items[index] = item;
 }
 
 void *vector_get(vector *v, size_t index) {
     if(v == NULL) return NULL;
-    if(index >= 0 && index < v->length)
+    if(index < v->length)
         return v->items[index];
     return NULL;
 }
 
 void vector_delete(vector *v, size_t index) {
     if(v == NULL) return;
-    if(index < 0 || index >= v->length) return;
+    if(index >= v->length) return;
     
     v->items[index] = NULL;
 
@@ -109,7 +109,7 @@ vector *vector_filter(vector *v, lambda filter) {
     return dup;
 }
 
-void *vector_reduce(vector *v, lambda fold) {
+void *vector_reduce(vector *v, lambda2 fold) {
     if(v == NULL || fold == NULL) return NULL;
 
     /* Get the initial value that gets returned

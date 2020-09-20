@@ -12,7 +12,8 @@
 /* The param void* can have more than 1 argument stored as a list of some sort */
 /* Since this is completely generic we can't check for validity of arguments */
 /* The validity of the function is dependent on the callee */
-typedef void* (*lambda)();
+typedef void* (*lambda)(void*);
+typedef void* (*lambda2)(void*, void*);
 
 /* Initial capacity of a vector */
 static const size_t vector_init_capacity = 32;
@@ -31,7 +32,7 @@ typedef struct vector {
     size_t length;
 } vector;
 
-static void vector_ensure_space(vector *v, size_t capacity);
+// static void vector_ensure_space(vector *v, size_t capacity);
 vector *new_vector(void);
 void vector_add(vector *v, void *item);
 void vector_set(vector *v, size_t index, void *item);
@@ -41,6 +42,6 @@ size_t vector_length(vector *v);
 vector *vector_dup(vector *v);
 vector *vector_map(vector *v, lambda modifier);
 vector *vector_filter(vector *v, lambda filter);
-void *vector_reduce(vector *v, lambda fold);
+void *vector_reduce(vector *v, lambda2 fold);
 
 #endif

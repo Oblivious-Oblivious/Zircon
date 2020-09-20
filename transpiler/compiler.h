@@ -25,24 +25,25 @@ string *remove_linefeed(string *str) {
     return string_filter(str, (stringlambda)fix_lf);
 }
 
-static void display_strings(char *item) {
-    printf("    %s\n", item);
+static void *display_strings(void *item) {
+    printf("    %s\n", (char*)item);
 }
 static void display_hashmap(hashmap *map) {
     hashmap_map(map, (lambda)display_strings, KEYS);
 }
 
-void delete_file(string *filename) {
+void *delete_file(string *filename) {
     remove(string_get(filename));
 }
 
-void add_includes_to_tranlation(string *inc) {
+void *add_includes_to_tranlation(void *inc) {
     string_add_str(translation, "#include \"");
     string_add_str(translation, string_get(inc));
     string_add_str(translation, "\"\n");
 }
 
-void compile_file(char *file_to_compile) {
+// void compile_file(char *file_to_compile) {
+void compile_file(void) {
     int i;
     for(i = total_i_values; i < argc; i++) {
         __setup_hashmaps();

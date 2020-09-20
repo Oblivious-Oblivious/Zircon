@@ -13,8 +13,6 @@ object Test implements Object((int): aValue, (int): bValue) {
         self->b = bValue;
     }
 
-    defer {}
-
     (void) self |> "test no param" |> self->a = 42;
     (void) self |> "test with 2 param" |> (int): a, (int): b |> self->a = a;
     (void) self |> "test compound statement no param" |> {
@@ -25,6 +23,6 @@ object Test implements Object((int): aValue, (int): bValue) {
     }
 }
 
-void main(void) {
-    return;
+int main(void) {
+    return 0;
 }

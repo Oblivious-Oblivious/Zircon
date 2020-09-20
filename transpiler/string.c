@@ -52,9 +52,7 @@ void string_add_str(string *sb, const char *str) {
 
 void string_add_char(string *sb, char c) {
     if(sb == NULL) return;
-
-    /* In any case we try to overflow the input */
-    if(c > 255 || c < 0) return;
+    if(c < 0) return;
 
     string_ensure_space(sb, 1);
 
@@ -88,7 +86,7 @@ char *string_get(string *sb) {
 }
 
 char string_get_char_at_index(string *sb, size_t index) {
-    if(sb == NULL || index < 0) return '\0';
+    if(sb == NULL) return '\0';
     return sb->str[index];
 }
 
@@ -175,9 +173,9 @@ string *string_substring(string *str, size_t from, size_t __to) {
     return strdup;
 }
 
-string *string_iterate(string *sb, lambda apply) {
+void string_iterate(string *sb, stringlambda apply) {
     /* TODO -> Convert check to asserts */
-    if(sb == NULL || apply == NULL) return NULL;
+    if(sb == NULL || apply == NULL) return;
 
     char *sb_str = string_get(sb);
 
@@ -220,7 +218,7 @@ char *string_identifier(string *sb) {
 
     unsigned char add_underscore = 0;
     char buf[32];
-    int i;
+    size_t i;
 
     for(i = 0; i < string_length(sb); i++) {
         char c = string_get(sb)[i];

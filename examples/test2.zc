@@ -17,9 +17,7 @@ static unsigned long long finance(unsigned long long n) {
     return result;
 }
 
-int main(int argc, char **argv) {
-    assert(argc == 1);
-
-    printf("%d\n", finance(24));
+int main(void) {
+    printf("%llu\n", finance(24));
     return 0;
 }

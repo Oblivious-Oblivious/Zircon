@@ -35,6 +35,7 @@ extern hashmap *enum_constants;
 
 extern void yyerror(const char*);
 static int tokenize_type(void);
+int sym_type(char *identifier);
 
 size_t comment_start = 0;
 

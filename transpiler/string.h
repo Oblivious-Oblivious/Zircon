@@ -10,7 +10,7 @@
 
 #include "vector.h"
 
-typedef char (*stringlambda)(char);
+typedef unsigned char (*stringlambda)(char);
 
 /** The initial minimum size of a string **/
 static const size_t string_init_capacity = 32;
@@ -28,7 +28,7 @@ typedef struct string {
     size_t length;
 } string;
 
-static void string_ensure_space(string *sb, size_t add_len);
+// static void string_ensure_space(string *sb, size_t add_len);
 string *new_string(char *initial_string);
 void string_add_str(string *sb, const char *str);
 void string_add_char(string *sb, char c);
@@ -44,7 +44,7 @@ unsigned char string_equals(string *sb, string *other);
 string *string_dup(string *sb);
 vector *string_split(string *str, string *delimeter);
 string *string_substring(string *str, size_t from, size_t __to);
-string *string_iterate(string *sb, lambda apply);
+void string_iterate(string *sb, stringlambda apply);
 string *string_map(string *sb, stringlambda modifier);
 string *string_filter(string *sb, stringlambda filter);
 char *string_identifier(string *sb);
