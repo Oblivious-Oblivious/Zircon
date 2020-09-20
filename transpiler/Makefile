@@ -1,12 +1,11 @@
 CC = gcc
-OPT = -O2 -march=native
-#VERSION = -std=c89
+OPT = -march=native -O2
+# VERSION = -std=c89
 OUTPUT = zircon
 
-FLAGS =
-WARNINGS = -Wno-int-conversion
-#YACC_FLAGS = -Wcounterexamples
-YACC_WARNINGS =
+FLAGS = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wpedantic -Wmissing-prototypes -Wstrict-prototypes
+WARNINGS = -Wno-maybe-uninitialized -Wno-unused-function -Wno-return-type
+#YACC_WARNINGS = -Wcounterexamples
 HEADERS =
 LIBS =
 
@@ -22,7 +21,7 @@ flex:
 	flex $(LEX)
 
 bison:
-	bison -d $(YACC_WARNINGS) $(YACC_FLAGS) $(YACC)
+	bison -d $(YACC_WARNINGS) $(YACC)
 
 compiler: flex bison
 	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
