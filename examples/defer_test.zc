@@ -1,0 +1,76 @@
+#import "Object"
+
+#include <math.h>
+#include "timer.h"
+
+int power(int base, int exp) {
+    int result = 1;
+
+    for(; exp > 0; exp--)
+        result *= base;
+
+    return result;
+}
+
+object Test implements Object((size_t): size) {
+    fields {
+        char *a;
+    }
+
+    init {
+        self->a = (char*)malloc(sizeof(char) * size);
+    }
+
+    defer {
+        free(self->a);
+    }
+}
+
+void defer_test(bool defer_object) {
+    unsigned long long curr_power;
+    unsigned long long counter = 0;
+    unsigned long long times = 1;
+    
+    int size = 256;
+    int x = 8;
+
+    size_t start_timer = _get_timer();
+    /***/
+        while(true) {
+            counter += size;
+        
+            void *t = Test "new" size;
+
+            if(defer_object)
+                t "defer";
+
+            curr_power = power(2, x);
+
+            if(counter == curr_power)
+                x++;
+
+            if(counter == 536870912) {
+                counter = 0;
+                x = 8;
+                times++;
+            
+                if(times == 4) {
+                    printf("Bytes allocated: %lld GB\n", times / 2);
+                    break;
+                }
+            }
+        }
+    /***/
+    size_t total_time = _get_timer() - start_timer;
+    display_total_time(total_time);
+}
+
+int main(void) {
+    printf("Allocating with defer\n");
+    defer_test(true);
+    printf("\n");
+
+    printf("Allocating without defer\n");
+    defer_test(false);
+    printf("\n");
+}
