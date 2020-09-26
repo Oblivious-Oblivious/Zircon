@@ -19,10 +19,11 @@ void yyerror(char*);
 
 /* Result of the parsed file */
 string *translation;
+string *init_calls;
 string *filename;
 bool main_flag = false;
 vector *files;
-vector *include_list_for_main;
+hashmap *object_list_for_main;
 
 /* Hashmaps containing special identifiers */
 hashmap *typedef_names;

@@ -12,7 +12,7 @@ static int _main(int _argc, char **_argv) {
     __setup_initial_object();
     main_flag = false;
     main_flag_was_set = false;
-    include_list_for_main = new_vector();
+    object_list_for_main = new_hashmap();
 
     /********************************/
     files = new_vector();

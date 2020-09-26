@@ -25,24 +25,17 @@ static string *remove_linefeed(string *str) {
     return string_filter(str, (stringlambda)fix_lf);
 }
 
-static void *display_strings(void *item) {
+static void *display_char_ptr(void *item) {
     printf("    %s\n", (char*)item);
 }
 static void display_hashmap(hashmap *map) {
-    hashmap_map(map, (lambda)display_strings, KEYS);
+    hashmap_map(map, (lambda)display_char_ptr, KEYS);
 }
 
 static void *delete_file(string *filename) {
     remove(string_get(filename));
 }
 
-static void *add_includes_to_tranlation(void *inc) {
-    string_add_str(translation, "#include \"");
-    string_add_str(translation, string_get(inc));
-    string_add_str(translation, "\"\n");
-}
-
-// static void compile_file(char *file_to_compile) {
 static void compile_file(void) {
     int i;
     for(i = total_i_values; i < argc; i++) {
@@ -57,6 +50,7 @@ static void compile_file(void) {
         /* printf("\033[38;5;206mCompiling: `%s`\033[0m\n", file_to_compile); */
         /* yyin = fopen(file_to_compile, "r"); */
         translation = new_string("");
+        init_calls = new_string("");
 
         /* Parse the text */
         yyparse();
@@ -64,8 +58,6 @@ static void compile_file(void) {
         /* Write the init nodes */
         if(main_flag) {
             main_flag_was_set = true;
-            vector_map(include_list_for_main, (lambda)add_includes_to_tranlation);
-            __setup_init_objects();
             filename = new_string("__zircon_main.c");
             string_add_str(command, string_get(filename));
         }
@@ -84,6 +76,14 @@ static void compile_file(void) {
         // printf("\n\033[38;5;206mobject_names\033[0m\n");
         // display_hashmap(object_names);
         /* @@@ */
+    }
+
+    /* Add the __setup_init_objects() function into the main file */
+    if(main_flag_was_set) {
+        __setup_init_objects();
+        fp = fopen("__zircon_main.c", "a");
+        fprintf(fp, "%s", string_get(init_calls));
+        fclose(fp);
     }
 }
 

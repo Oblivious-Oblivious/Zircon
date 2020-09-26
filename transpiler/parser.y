@@ -1796,9 +1796,6 @@ preprocessor_control_line:
         $$ = new_string("\n#include \"");
         string_add_str($$, string_get(import_value));
         string_add_str($$, "\"\n");
-        
-        /* Add to the include list */
-        vector_add(include_list_for_main, import_value);
     }
     ;
 

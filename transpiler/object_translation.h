@@ -17,6 +17,7 @@ static string *translate_object(string *name_of_object, string *parent_object, v
 
     hashmap_add(typedef_names, string_get(string_dup(name_of_object)), (void*)true);
     hashmap_add(object_names, string_get(string_dup(name_of_object)), (void*)true);
+    hashmap_add(object_list_for_main, string_get(string_dup(name_of_object)), (void*)true);
 
     /* Translate the parsed data */
     string_add_str(object_translation_unit, "\n#ifndef __");

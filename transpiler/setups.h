@@ -344,14 +344,14 @@ static void *write_init_calls(void *o) {
     /* If the node is `Object` we dont need to initialize it */
     if(string_equals(new_string(o), new_string("Object"))) return NULL;
 
-    string_add_str(translation, "    __init_");
-    string_add_str(translation, o);
-    string_add_str(translation, "();\n");
+    string_add_str(init_calls, "    __init_");
+    string_add_str(init_calls, o);
+    string_add_str(init_calls, "();\n");
 }
 static void __setup_init_objects(void) {
-    string_add_str(translation, "void __setup_objects(void) {\n");
-    hashmap_map(object_names, (lambda)write_init_calls, KEYS);
-    string_add_str(translation, "}\n");
+    string_add_str(init_calls, "void __setup_objects(void) {\n");
+    hashmap_map(object_list_for_main, (lambda)write_init_calls, KEYS);
+    string_add_str(init_calls, "}\n");
 }
 
 #endif
