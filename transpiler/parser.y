@@ -954,12 +954,7 @@ object_parameter_type:
         vector_add($$, $5); /* name */
         vector_add($$, false); /* is object */
     }
-    | '(' declaration_specifiers_or_pointer ')' ':' '@' declarator {
-        $$ = new_vector();
-        vector_add($$, $2);   /* type */
-        vector_add($$, $6);   /* name */
-        vector_add($$, (void*)true); /* is object */
-    }
+    ;
 
 model_declaration_list:
       model_declaration {

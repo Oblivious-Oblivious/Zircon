@@ -107,7 +107,6 @@ int sym_type(char *identifier) {
 "_Thread_local"                        tokenize(THREAD_LOCAL);
 
 "|>"                                   tokenize(SEND);
-"@"                                    tokenize('@');
 
 "("                                    tokenize('(');
 ")"                                    tokenize(')');
