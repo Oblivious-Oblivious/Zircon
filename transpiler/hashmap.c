@@ -126,32 +126,32 @@ static size_t hashmap_hash(hashmap *map, char *key) {
 	return -1;
 }
 
-// /**
-//  * @func: hashmap_rehash
-//  * @desc: Doubles the size of the hashmap and rehashes all the elements
-//  * @param in -> The hashmap to rehash
-//  **/
-// static void hashmap_rehash(hashmap *map) {
-//     hashmap_element *temp = (hashmap_element*)calloc(2 * map->alloced, sizeof(hashmap_element));
+/**
+ * @func: hashmap_rehash
+ * @desc: Doubles the size of the hashmap and rehashes all the elements
+ * @param in -> The hashmap to rehash
+ **/
+static void hashmap_rehash(hashmap *map) {
+    hashmap_element *temp = (hashmap_element*)calloc(2 * map->alloced, sizeof(hashmap_element));
 
-// 	/* Update the array */
-// 	hashmap_element *curr = map->data;
-// 	map->data = temp;
+	/* Update the array */
+	hashmap_element *curr = map->data;
+	map->data = temp;
 
-// 	/* Update the size */
-// 	size_t old_size = map->alloced;
-// 	map->alloced = 2 * map->alloced;
-// 	map->length = 0;
+	/* Update the size */
+	size_t old_size = map->alloced;
+	map->alloced = 2 * map->alloced;
+	map->length = 0;
 
-//     /* Rehash all the elements */
-//     size_t i = 0;
-// 	for(i = 0; i < old_size; i++) {
-//         /* Skip deleted elements */
-//         if(curr[i].in_use == 0) continue;
-// 		hashmap_add(map, curr[i].key, curr[i].data);
-// 	}
-// 	return;
-// }
+    /* Rehash all the elements */
+    size_t i = 0;
+	for(i = 0; i < old_size; i++) {
+        /* Skip deleted elements */
+        if(curr[i].in_use == 0) continue;
+		hashmap_add(map, curr[i].key, curr[i].data);
+	}
+	return;
+}
 
 hashmap *new_hashmap(void) {
     hashmap *map = (hashmap*)malloc(sizeof(hashmap));
@@ -164,13 +164,13 @@ hashmap *new_hashmap(void) {
 void hashmap_add(hashmap *map, char *key, void *value) {
     if(map == NULL || key == NULL) return;
 
-    size_t index = hashmap_hash(map, key);
+    signed long long index = hashmap_hash(map, key);
     
     /* In case of a full hashmap */
-	// while(index == -1) {
-    //     hashmap_rehash(map);
-	// 	index = hashmap_hash(map, key);
-	// }
+	while(index == -1) {
+        hashmap_rehash(map);
+		index = hashmap_hash(map, key);
+	}
 
 	map->data[index].data = value;
 	map->data[index].key = key;
