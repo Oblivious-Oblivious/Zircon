@@ -18,10 +18,10 @@ void yyerror(char *s) {
     /* yyparse(); */
 }
 
-bool fix_lf(char c) {
+static bool fix_lf(char c) {
     return (c != '\r' && c != '\n');
 }
-string *remove_linefeed(string *str) {
+static string *remove_linefeed(string *str) {
     return string_filter(str, (stringlambda)fix_lf);
 }
 
@@ -32,18 +32,18 @@ static void display_hashmap(hashmap *map) {
     hashmap_map(map, (lambda)display_strings, KEYS);
 }
 
-void *delete_file(string *filename) {
+static void *delete_file(string *filename) {
     remove(string_get(filename));
 }
 
-void *add_includes_to_tranlation(void *inc) {
+static void *add_includes_to_tranlation(void *inc) {
     string_add_str(translation, "#include \"");
     string_add_str(translation, string_get(inc));
     string_add_str(translation, "\"\n");
 }
 
-// void compile_file(char *file_to_compile) {
-void compile_file(void) {
+// static void compile_file(char *file_to_compile) {
+static void compile_file(void) {
     int i;
     for(i = total_i_values; i < argc; i++) {
         __setup_hashmaps();
@@ -77,12 +77,12 @@ void compile_file(void) {
         fclose(fp);
 
         /* @@@ */
-        /* printf("\n\033[38;5;206mtypedef_names\033[0m\n");
-        display_hashmap(typedef_names);
-        printf("\n\033[38;5;206menum_constants\033[0m\n");
-        display_hashmap(enum_constants);
-        printf("\n\033[38;5;206mobject_names\033[0m\n");
-        display_hashmap(object_names); */
+        // printf("\n\033[38;5;206mtypedef_names\033[0m\n");
+        // display_hashmap(typedef_names);
+        // printf("\n\033[38;5;206menum_constants\033[0m\n");
+        // display_hashmap(enum_constants);
+        // printf("\n\033[38;5;206mobject_names\033[0m\n");
+        // display_hashmap(object_names);
         /* @@@ */
     }
 }

@@ -17,16 +17,6 @@ int yylex(void);
 int yyparse(void);
 void yyerror(char*);
 
-// void compile_file(char*);
-void compile_file(void);
-bool fix_lf(char c);
-string *remove_linefeed(string *str);
-void *delete_file(string *filename);
-void *add_includes_to_tranlation(void *inc);
-int _main(int _argc, char **_argv);
-
-string *translate_object(string *name_of_object, string *parent_object, vector *object_parameter_list, vector *declaration_list);
-
 /* Result of the parsed file */
 string *translation;
 string *filename;

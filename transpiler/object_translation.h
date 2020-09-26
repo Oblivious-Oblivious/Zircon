@@ -3,7 +3,7 @@
 
 #include "includes.h"
 
-string *translate_object(string *name_of_object, string *parent_object, vector *object_parameter_list, vector *declaration_list) {
+static string *translate_object(string *name_of_object, string *parent_object, vector *object_parameter_list, vector *declaration_list) {
     string *object_translation_unit = new_string("");
     main_flag = false;
 

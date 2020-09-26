@@ -3,7 +3,7 @@
 
 #include "includes.h"
 
-int _main(int _argc, char **_argv) {
+static int _main(int _argc, char **_argv) {
     assert(_argc > 1 && _argv);
     argc = _argc;
     argv = _argv;
