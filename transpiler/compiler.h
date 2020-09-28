@@ -44,6 +44,7 @@ static void compile_file(void) {
         hashmap_add(typedef_names, "size_t", (void*)true);
         hashmap_add(typedef_names, "bool", (void*)true);
         hashmap_add(typedef_names, "lambda", (void*)true);
+        hashmap_add(typedef_names, "hashmap_element_type", (void*)true);
         /**/
         
         /* printf("\033[38;5;206mCompiling: `%s`\033[0m\n", argv[i]); */
