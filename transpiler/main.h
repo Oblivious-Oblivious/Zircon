@@ -18,7 +18,7 @@ static int _main(int _argc, char **_argv) {
     files = new_vector();
     vector_add(files, new_string("Object.h"));
     command = new_string("gcc ");
-    string_add_str(command, "-Wno-empty-body -fno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable -Wno-return-type -Wno-missing-prototypes -Wno-unused-parameter -Wno-unused-function -Wno-cast-function-type ");
+    string_add_str(command, "-Wno-format -Wno-empty-body -fno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable -Wno-return-type -Wno-missing-prototypes -Wno-unused-parameter -Wno-unused-function -Wno-cast-function-type ");
     string_add_str(command, "-march=native -O2 -Wall -Wextra -Werror -pedantic -pedantic-errors -Wpedantic ");
 
     total_i_values = 2;
