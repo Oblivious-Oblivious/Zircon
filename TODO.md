@@ -9,13 +9,9 @@
     🟩 Rewrite cDataLib using Zircon.
 
 ## (✗) ver. 0.3.0 proposals
-    🟥 Fix selectors on different classes with same names (fix namespacing).
     🟥 Add a compiler setup file to include predefined names and preprocessor directives.
-    🟥 Fix typedef names with identifiers.
-    🟥 Fix preprocessor with typedefs.
     🟥 Bypass the C preprocessor and write a custom one, that includes extending to messages and objects.
     🟥 Extend the object model allowing for more reflection.
-    🟥 Fix nested message calls that now require parentheses.
     🟥 Generalize test suite and test files (write a simplified version of cSpec).
     🟥 Create a website to host code, where objects can be forked.
     🟥 Find a way to compile objects to DLLS, for independent redeployment.
@@ -24,15 +20,13 @@
 
 ## (✗) ver. 0.4.0 proposals
     🟥 Find a way to incorporate existing libraries with zircon (using some sort of object porting).
-    🟥 Find a way to declare static functions inside classes.
     🟥 Add implicit, explicit calls to bypass compiler optimizations.
     🟥 Try avoid nullity checks, and implement specific action when an object turns out to be NULL.
     🟥 Try implementing automatic defer calls when out of block range (keep for implicit declarations).
     🟥 Fix spaces on text generation (implement a rudimentary form of a self hosting compiler).
     🟥 Declutter compilation steps.
-    🟥 Fix `__init_Object()` declarations with independent compilation.
+    🟩 Fix `__init_Object()` declarations with independent compilation.
     🟥 Add object header files (yaml or list syntax) for documentation and enabling DLL compilation.
-    🟥 Fix messages with the first parameter being a string needing parentheses.
     🟥 Implement void selectors choosing to translate a return statement or not according to return type.
     🟥 Remove the need for `#import "Object"`.
     🟥 Rewrite cSpec using Zircon.
