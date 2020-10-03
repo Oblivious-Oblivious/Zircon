@@ -1,0 +1,26 @@
+#import "Object"
+
+object Test implements Object((int): number) {
+    fields {
+        int number;
+    }
+
+    init {
+        self->number = number;
+    }
+
+    (void) self |> "display number" |> printf("n: %d\n", self->number);
+}
+
+int main(void) {
+    void *t1 = Test "new" 5;
+    void *t2 = Test "new" 42;
+
+    if(t1 "differ" t2) printf("they differ\n");
+    else printf("they do not\n");
+
+    t1 "display number";
+    t2 "display number";
+
+    return 0;
+}

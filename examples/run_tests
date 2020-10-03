@@ -10,6 +10,7 @@ echo "Running \`test7.zc\`" && ./zircon test7.zc; echo
 echo "Running \`test8.zc\`" && ./zircon test8.zc; echo
 echo "Running \`test9.zc\`" && ./zircon test9.zc; echo
 #echo "Running \`test10.zc\`" && ./zircon test10.zc; echo
+echo "Running \`test11.zc\`" && ./zircon test11.zc; echo
 
 echo "Running \`lffile.zc\`" && ./zircon lffile.zc; echo
 echo "Running \`keywords.zc\`" && ./zircon keywords.zc; echo
