@@ -136,6 +136,9 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    struct Class *class = classOf(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->differ);\n");
+    /******************************************************************************/
+    string_add_str(obj, "    cast(other, Object);\n");
+    /******************************************************************************/
     string_add_str(obj, "    result = class->differ(_self, other);\n");
     string_add_str(obj, "    return result;\n");
     string_add_str(obj, "}\n");
