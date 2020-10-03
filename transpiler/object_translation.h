@@ -157,6 +157,9 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                     }
                 }
                 string_add_str(object_translation_unit, ") {\n");
+                string_add_str(object_translation_unit, "    ");
+                string_add_str(object_translation_unit, string_get(vector_get(message, 0)));
+                string_add_str(object_translation_unit, "result;\n");
                 string_add_str(object_translation_unit, "    struct ");
                 string_add_str(object_translation_unit, string_get(name_of_object));
                 string_add_str(object_translation_unit, "Class *class = classOf(_self);\n\n");
@@ -165,7 +168,8 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 string *name = vector_get(message, 2);
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, ");\n");
-                string_add_str(object_translation_unit, "    return class->");
+                // string_add_str(object_translation_unit, "cast(,)");
+                string_add_str(object_translation_unit, "    result = class->");
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, "(_self");
                 vector *message_fields = vector_get(message, 3);
@@ -175,7 +179,13 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                     vector *current_message_fields = vector_get(message_fields, j);
                     string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 1)));
                 }
-                string_add_str(object_translation_unit, ");\n}\n");
+                string_add_str(object_translation_unit, ");\n");
+
+                /********/
+                // if("result is not void")
+                    string_add_str(object_translation_unit, "    return result;\n");
+                /********/
+                string_add_str(object_translation_unit, "}\n");
 
                 /* Write super call */
                 string_add_str(object_translation_unit, string_get(vector_get(message, 0)));
@@ -199,13 +209,16 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                     }
                 }
                 string_add_str(object_translation_unit, ") {\n");
+                string_add_str(object_translation_unit, "    ");
+                string_add_str(object_translation_unit, string_get(vector_get(message, 0)));
+                string_add_str(object_translation_unit, "result;\n");
                 string_add_str(object_translation_unit, "    struct ");
                 string_add_str(object_translation_unit, string_get(name_of_object));
                 string_add_str(object_translation_unit, "Class *superclass = super(_class);\n\n");
                 string_add_str(object_translation_unit, "    assert(_self && superclass->");
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, ");\n");
-                string_add_str(object_translation_unit, "    return superclass->");
+                string_add_str(object_translation_unit, "    result = superclass->");
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, "(_self");
                 for(j = 0; j < vector_length(message_fields); j++) {
@@ -213,7 +226,13 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                     vector *current_message_fields = vector_get(message_fields, j);
                     string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 1)));
                 }
-                string_add_str(object_translation_unit, ");\n}\n");
+                string_add_str(object_translation_unit, ");\n");
+
+                /********/
+                // if("result is not void")
+                    string_add_str(object_translation_unit, "    return result;\n");
+                /********/
+                string_add_str(object_translation_unit, "}\n");
             }
         }
     }
@@ -302,7 +321,9 @@ static string *translate_object(string *name_of_object, string *parent_object, v
         string_add_str(object_translation_unit, ") {\n");
         string_add_str(object_translation_unit, "struct ");
         string_add_str(object_translation_unit, string_get(name_of_object));
-        string_add_str(object_translation_unit, " *self = _self;\n");
+        string_add_str(object_translation_unit, " *self = cast(_self, ");
+        string_add_str(object_translation_unit, string_get(name_of_object));
+        string_add_str(object_translation_unit, ");\n");
         string_add_str(object_translation_unit, "struct ");
         string_add_str(object_translation_unit, string_get(parent_object));
         string_add_str(object_translation_unit, " *super = (struct ");

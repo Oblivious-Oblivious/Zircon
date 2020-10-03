@@ -37,6 +37,10 @@
     🟥 Remove the need for `#import "Object"`.
     🟥 Rewrite cSpec using Zircon.
 
+## (✗) ver. 0.5.0 proposals
+    🟥 When compiling two files without a main function, only the first gets translated properly (fix).
+    🟥 Fix selectors returning void, by choosing at compile time whether to return or not.
+
 ## (✗) ver. 1.0.0 goals
     🟥 Make compiler self hosting.
     🟥 Add ability for object literals ("str" "call message", 2 "add one").
