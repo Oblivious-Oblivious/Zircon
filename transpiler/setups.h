@@ -59,7 +59,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "#define ZIRCON_MAGIC 0x042decaf\n");
     string_add_str(obj, "void *zircon_static_method_is_object(void *p) {\n");
     string_add_str(obj, "    assert(p);\n");
-    string_add_str(obj, "    assert(((struct Object*)p)->magic == ZIRCON_MAGIC);\n");
+    // string_add_str(obj, "    assert(((struct Object*)p)->magic == ZIRCON_MAGIC);\n");
     string_add_str(obj, "    return p;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
