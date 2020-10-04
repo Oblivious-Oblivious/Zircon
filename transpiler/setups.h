@@ -53,19 +53,19 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "void *Object;\n");
     string_add_str(obj, "void *Class;\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static void *classOf(void *_self) {\n");
+    string_add_str(obj, "static void *zircon_static_method_class_of(void *_self) {\n");
     string_add_str(obj, "    struct Object *self = _self;\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && self && self->class);\n");
     string_add_str(obj, "    return self->class;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static size_t sizeOf(void *_self) {\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "static size_t zircon_static_method_size_of(void *_self) {\n");
+    string_add_str(obj, "    struct Class *class = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "    return class->size;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "static void *super(void *_self) {\n");
+    string_add_str(obj, "static void *zircon_static_method_super(void *_self) {\n");
     string_add_str(obj, "    struct Class *self = _self;\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && self && self->super);\n");
@@ -73,15 +73,15 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "}\n");
 
     string_add_str(obj, "static bool is_a(void *_self, void *class) {\n");
-    string_add_str(obj, "    return _self && classOf(_self) == class;\n");
+    string_add_str(obj, "    return _self && zircon_static_method_class_of(_self) == class;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "static bool is_of(void *_self, void *class) {\n");
     string_add_str(obj, "    if(_self) {\n");
-    string_add_str(obj, "        struct Class *myClass = classOf(_self);\n");
+    string_add_str(obj, "        struct Class *myClass = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "        if(class != Object) {\n");
     string_add_str(obj, "            while(myClass != class)\n");
     string_add_str(obj, "                if(myClass != Object)\n");
-    string_add_str(obj, "                    myClass = super(myClass);\n");
+    string_add_str(obj, "                    myClass = zircon_static_method_super(myClass);\n");
     string_add_str(obj, "                else\n");
     string_add_str(obj, "                    return false;\n");
     string_add_str(obj, "        }\n");
@@ -97,7 +97,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_ctor(void *_self, va_list *app) {\n");
     string_add_str(obj, "    void *result;\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->ctor);\n");
     string_add_str(obj, "    result = class->ctor(_self, app);\n");
@@ -106,7 +106,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_super_ctor(void *_class, void *_self, va_list *app) {\n");
     string_add_str(obj, "    void *result;\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = zircon_static_method_super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->ctor);\n");
     string_add_str(obj, "    result = superclass->ctor(_self, app);\n");
@@ -115,7 +115,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_dtor(void *_self) {\n");
     string_add_str(obj, "    void *result;\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->dtor);\n");
     string_add_str(obj, "    result = class->dtor(_self);\n");
@@ -124,7 +124,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_super_dtor(void *_class, void *_self) {\n");
     string_add_str(obj, "    void *result;\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = zircon_static_method_super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->dtor);\n");
     string_add_str(obj, "    result = superclass->dtor(_self);\n");
@@ -133,7 +133,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "bool zircon_differ(void *_self, void *other) {\n");
     string_add_str(obj, "    bool result;\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->differ);\n");
     /******************************************************************************/
@@ -145,7 +145,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "bool zircon_super_differ(void *_class, void *_self, void *other) {\n");
     string_add_str(obj, "    bool result;\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = zircon_static_method_super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->differ);\n");
     string_add_str(obj, "    result = superclass->differ(_self, other);\n");
@@ -154,7 +154,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "bool zircon_puto(void *_self, FILE *fd) {\n");
     string_add_str(obj, "    bool result;\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->puto);\n");
     string_add_str(obj, "    result = class->puto(_self, fd);\n");
@@ -163,7 +163,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "bool zircon_super_puto(void *_class, void *_self, FILE *fd) {\n");
     string_add_str(obj, "    bool result;\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = zircon_static_method_super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->puto);\n");
     string_add_str(obj, "    result = superclass->puto(_self, fd);\n");
@@ -172,7 +172,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_class(void *_self) {\n");
     string_add_str(obj, "    void *result;\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->class);\n");
     string_add_str(obj, "    result = class->class(_self);\n");
@@ -181,7 +181,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_super_class(void *_class, void *_self) {\n");
     string_add_str(obj, "    void *result;\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = zircon_static_method_super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->class);\n");
     string_add_str(obj, "    result = superclass->class(_self);\n");
@@ -190,7 +190,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_superclass(void *_self) {\n");
     string_add_str(obj, "    void *result;\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->superclass);\n");
     string_add_str(obj, "    result = class->superclass(_self);\n");
@@ -199,7 +199,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_super_superclass(void *_class, void *_self) {\n");
     string_add_str(obj, "    void *result;\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = zircon_static_method_super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->superclass);\n");
     string_add_str(obj, "    result = superclass->superclass(_self);\n");
@@ -208,7 +208,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "char *zircon_to_string(void *_self) {\n");
     string_add_str(obj, "    char *result;\n");
-    string_add_str(obj, "    struct Class *class = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *class = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->to_string);\n");
     string_add_str(obj, "    result = class->to_string(_self);\n");
@@ -217,7 +217,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "char *zircon_super_to_string(void *_class, void *_self) {\n");
     string_add_str(obj, "    char *result;\n");
-    string_add_str(obj, "    struct Class *superclass = super(_class);\n");
+    string_add_str(obj, "    struct Class *superclass = zircon_static_method_super(_class);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(_self && superclass->to_string);\n");
     string_add_str(obj, "    result = superclass->to_string(_self);\n");
@@ -237,22 +237,22 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "static bool Object_puto(void *_self, FILE *fd) {\n");
-    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *self = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "    return fprintf(fd, \"%s at %p\\n\", self->name, _self);\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "static void *Object_class(void *_self) {\n");
-    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *self = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "    return self;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "static void *Object_superclass(void *_self) {\n");
-    string_add_str(obj, "    struct Class *superclass = super(_self);\n");
+    string_add_str(obj, "    struct Class *superclass = zircon_static_method_super(_self);\n");
     string_add_str(obj, "    return superclass;\n");
     string_add_str(obj, "}\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "static char *Object_to_string(void *_self) {\n");
-    string_add_str(obj, "    struct Class *self = classOf(_self);\n");
+    string_add_str(obj, "    struct Class *self = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "    char *buf = (char*)malloc(sizeof(char) * 1024);\n");
     string_add_str(obj, "    sprintf(buf, \"@%s\", self->name);\n");
     string_add_str(obj, "    return buf;\n");
@@ -268,7 +268,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(self->super);\n");
     string_add_str(obj, "\n");
-    string_add_str(obj, "    memcpy((char*)self + offset, (char*)self->super + offset, sizeOf(self->super) - offset);\n");
+    string_add_str(obj, "    memcpy((char*)self + offset, (char*)self->super + offset, zircon_static_method_size_of(self->super) - offset);\n");
     string_add_str(obj, "\n");
     string_add_str(obj, "    typedef void (*voidf) ();\n");
     string_add_str(obj, "    voidf selector;\n");

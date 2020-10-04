@@ -162,7 +162,7 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 string_add_str(object_translation_unit, "result;\n");
                 string_add_str(object_translation_unit, "    struct ");
                 string_add_str(object_translation_unit, string_get(name_of_object));
-                string_add_str(object_translation_unit, "Class *class = classOf(_self);\n\n");
+                string_add_str(object_translation_unit, "Class *class = zircon_static_method_class_of(_self);\n\n");
                 string_add_str(object_translation_unit, "    assert(class->");
 
                 string *name = vector_get(message, 2);
@@ -214,7 +214,7 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 string_add_str(object_translation_unit, "result;\n");
                 string_add_str(object_translation_unit, "    struct ");
                 string_add_str(object_translation_unit, string_get(name_of_object));
-                string_add_str(object_translation_unit, "Class *superclass = super(_class);\n\n");
+                string_add_str(object_translation_unit, "Class *superclass = zircon_static_method_super(_class);\n\n");
                 string_add_str(object_translation_unit, "    assert(_self && superclass->");
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, ");\n");
