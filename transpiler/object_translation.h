@@ -168,7 +168,7 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 string *name = vector_get(message, 2);
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, ");\n");
-                // string_add_str(object_translation_unit, "cast(,)");
+                // string_add_str(object_translation_unit, "zircon_static_method_cast(,)");
                 string_add_str(object_translation_unit, "    result = class->");
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, "(_self");
@@ -321,7 +321,7 @@ static string *translate_object(string *name_of_object, string *parent_object, v
         string_add_str(object_translation_unit, ") {\n");
         string_add_str(object_translation_unit, "struct ");
         string_add_str(object_translation_unit, string_get(name_of_object));
-        string_add_str(object_translation_unit, " *self = cast(_self, ");
+        string_add_str(object_translation_unit, " *self = zircon_static_method_cast(_self, ");
         string_add_str(object_translation_unit, string_get(name_of_object));
         string_add_str(object_translation_unit, ");\n");
         string_add_str(object_translation_unit, "struct ");

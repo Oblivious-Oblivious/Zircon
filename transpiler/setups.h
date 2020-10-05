@@ -90,10 +90,10 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    return self->super;\n");
     string_add_str(obj, "}\n");
 
-    string_add_str(obj, "static bool is_a(void *_self, void *class) {\n");
+    string_add_str(obj, "static bool zircon_static_method_is_a(void *_self, void *class) {\n");
     string_add_str(obj, "    return _self && zircon_static_method_class_of(_self) == class;\n");
     string_add_str(obj, "}\n");
-    string_add_str(obj, "static bool is_of(void *_self, void *class) {\n");
+    string_add_str(obj, "static bool zircon_static_method_is_of(void *_self, void *class) {\n");
     string_add_str(obj, "    if(_self) {\n");
     string_add_str(obj, "        struct Class *myClass = zircon_static_method_class_of(_self);\n");
     string_add_str(obj, "        if(class != Object) {\n");
@@ -110,7 +110,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "static void zircon_catch(int sig) {\n");
     string_add_str(obj, "    assert(sig == 0);\n");
     string_add_str(obj, "}\n");
-    string_add_str(obj, "static void *cast(void *_self, void *class) {\n");
+    string_add_str(obj, "static void *zircon_static_method_cast(void *_self, void *class) {\n");
     string_add_str(obj, "    void (*sigsegv_descriptor)(int) = signal(SIGSEGV, zircon_catch);\n");
     string_add_str(obj, "#ifdef SIGBUS\n");
     string_add_str(obj, "    void (*sigbus_descriptor)(int) = signal(SIGBUS, zircon_catch);\n");
@@ -189,7 +189,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "\n");
     string_add_str(obj, "    assert(class->differ);\n");
     /******************************************************************************/
-    string_add_str(obj, "    cast(other, Object);\n");
+    string_add_str(obj, "    zircon_static_method_cast(other, Object);\n");
     /******************************************************************************/
     string_add_str(obj, "    result = class->differ(_self, other);\n");
     string_add_str(obj, "    return result;\n");
