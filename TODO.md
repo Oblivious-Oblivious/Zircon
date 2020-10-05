@@ -4,15 +4,15 @@
     🟩 Check for custom class destructors.
     🟩 Refactor base code to be more modular.
     🟩 When main flag is raised, include all headers store in the `__zircon_main` file.
-    ❌ Create an operator for casting to objects (without violating encapsulation rules).
-    ❌ Messages cannot handle casting other objects atm only for objects of the same class.
+    🟩 Create an operator for casting to objects (without violating encapsulation rules).
+    🟩 Messages cannot handle casting other objects atm only for objects of the same class.
     🟩 Rewrite cDataLib using Zircon.
 
 ## (✗) ver. 0.3.0 proposals
-    🟥 Fix selectors on different classes with same names (fix namespacing).
-    🟥 Add a compiler setup file to include predefined names and preprocessor directives.
     🟥 Fix typedef names with identifiers.
     🟥 Fix preprocessor with typedefs.
+    🟥 Fix selectors on different classes with same names (fix namespacing).
+    🟥 Add a compiler setup file to include predefined names and preprocessor directives.
     🟥 Bypass the C preprocessor and write a custom one, that includes extending to messages and objects.
     🟥 Extend the object model allowing for more reflection.
     🟥 Fix nested message calls that now require parentheses.
@@ -40,6 +40,8 @@
 ## (✗) ver. 0.5.0 proposals
     🟥 When compiling two files without a main function, only the first gets translated properly (fix).
     🟥 Fix selectors returning void, by choosing at compile time whether to return or not.
+    🟥 Add the callback method code for Object
+    🟥 Override `new` and `defer` for better memory management.
 
 ## (✗) ver. 1.0.0 goals
     🟥 Make compiler self hosting.

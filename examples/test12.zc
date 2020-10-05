@@ -1,0 +1,32 @@
+#import "Object"
+
+object A implements Object {
+    fields {}
+    (int) self |> "get" |> return 42;
+}
+
+object B implements Object {
+    fields {}
+    (int) self |> "get" |> return 41;
+}
+
+int main(void) {
+    A @a = A "new";
+    B @b = B "new";
+
+    printf("%d\n", a "get");
+    printf("%d\n", b "get");
+}
+
+/*
+
+struct A *a = new(A);
+struct B *b = new(B);
+
+zircon_A_get_selector() -> select for A@
+zircon_B_get_selector() -> select for B@
+
+A_get();
+B_get();
+
+*/
