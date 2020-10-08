@@ -42,6 +42,10 @@
     🟥 Fix selectors returning void, by choosing at compile time whether to return or not.
     🟥 Add the callback method code for Object
     🟥 Override `new` and `defer` for better memory management.
+    🟥 Fix asserts on independent compilation.
+    🟥 Add optional named parameters, (maybe solves the parameter delimiter issue)
+
+    🟥 Create a Github release.
 
 ## (✗) ver. 1.0.0 goals
     🟥 Make compiler self hosting.
