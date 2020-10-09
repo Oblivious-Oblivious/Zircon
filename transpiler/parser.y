@@ -652,78 +652,78 @@ init_declarator:
 
 storage_class_specifier:
       TYPEDEF {
-        // $$ = new_string("typedef");
+        /* $$ = new_string("typedef"); */
         $$ = new_string("typedef ");
     }
     | EXTERN {
-        // $$ = new_string("extern");
+        /* $$ = new_string("extern"); */
         $$ = new_string("extern ");
     }
     | STATIC {
-        // $$ = new_string("static");
+        /* $$ = new_string("static"); */
         $$ = new_string("static ");
     }
     | THREAD_LOCAL {
-        // $$ = new_string("_Thread_local");
+        /* $$ = new_string("_Thread_local"); */
         $$ = new_string("_Thread_local ");
     }
     | AUTO {
-        // $$ = new_string("auto");
+        /* $$ = new_string("auto"); */
         $$ = new_string("auto ");
     }
     | REGISTER {
-        // $$ = new_string("register");
+        /* $$ = new_string("register"); */
         $$ = new_string("register ");
     }
     ;
 
 type_specifier:
       VOID {
-        // $$ = new_string("void");
+        /* $$ = new_string("void"); */
         $$ = new_string("void ");
     }
     | CHAR {
-        // $$ = new_string("char");
+        /* $$ = new_string("char"); */
         $$ = new_string("char ");
     }
     | SHORT {
-        // $$ = new_string("short");
+        /* $$ = new_string("short"); */
         $$ = new_string("short ");
     }
     | INT {
-        // $$ = new_string("int");
+        /* $$ = new_string("int"); */
         $$ = new_string("int ");
     }
     | LONG {
-        // $$ = new_string("long");
+        /* $$ = new_string("long"); */
         $$ = new_string("long ");
     }
     | FLOAT {
-        // $$ = new_string("float");
+        /* $$ = new_string("float"); */
         $$ = new_string("float ");
     }
     | DOUBLE {
-        // $$ = new_string("double");
+        /* $$ = new_string("double"); */
         $$ = new_string("double ");
     }
     | SIGNED {
-        // $$ = new_string("signed");
+        /* $$ = new_string("signed"); */
         $$ = new_string("signed ");
     }
     | UNSIGNED {
-        // $$ = new_string("unsigned");
+        /* $$ = new_string("unsigned"); */
         $$ = new_string("unsigned ");
     }
     | BOOL {
-        // $$ = new_string("_Bool");
+        /* $$ = new_string("_Bool"); */
         $$ = new_string("_Bool ");
     }
     | COMPLEX {
-        // $$ = new_string("_Complex");
+        /* $$ = new_string("_Complex"); */
         $$ = new_string("_Complex ");
     }
     | IMAGINARY {
-        // $$ = new_string("_Imaginary");
+        /* $$ = new_string("_Imaginary"); */
         $$ = new_string("_Imaginary ");
     }
     | atomic_type_specifier {
@@ -790,8 +790,8 @@ message_declaration_list:
         vector_add($$, $1);
     }
     | message_declaration_list message_declaration {
-        $$ = new_vector();
         size_t i;
+        $$ = new_vector();
         for(i = 0; i < vector_length($1); i++)
             vector_add($$, vector_get($1, i));
         vector_add($$, $2);
@@ -849,13 +849,14 @@ message_declaration:
 
 constructor_declaration:
       INIT compound_statement {
+        vector *params = new_vector();
+        vector *param1 = new_vector();
+
         $$ = new_vector();
         vector_add($$, new_string("void ")); /* return value */
         vector_add($$, new_string("super ")); /* sender */
         vector_add($$, new_string("\"new\" ")); /* name */
 
-        vector *params = new_vector();
-        vector *param1 = new_vector();
         vector_add(param1, new_string("va_list* "));
         vector_add(param1, new_string("app"));
         vector_add(params, param1);
@@ -927,11 +928,11 @@ struct_or_union_specifier:
 
 struct_or_union:
       STRUCT {
-        // $$ = new_string("struct");
+        /* $$ = new_string("struct"); */
         $$ = new_string("struct ");
     }
     | UNION {
-        // $$ = new_string("union");
+        /* $$ = new_string("union"); */
         $$ = new_string("union ");
     }
     ;
@@ -1114,30 +1115,30 @@ atomic_type_specifier:
 
 type_qualifier:
       CONST {
-        // $$ = new_string("const");
+        /* $$ = new_string("const"); */
         $$ = new_string("const ");
     }
     | RESTRICT {
-        // $$ = new_string("restrict");
+        /* $$ = new_string("restrict"); */
         $$ = new_string("restrict ");
     }
     | VOLATILE {
-        // $$ = new_string("volatile");
+        /* $$ = new_string("volatile"); */
         $$ = new_string("volatile ");
     }
     | ATOMIC {
-        // $$ = new_string("_Atomic");
+        /* $$ = new_string("_Atomic"); */
         $$ = new_string("_Atomic ");
     }
     ;
 
 function_specifier:
       INLINE {
-        // $$ = new_string("inline");
+        /* $$ = new_string("inline"); */
         $$ = new_string("inline ");
     }
     | NORETURN {
-        // $$ = new_string("_Noreturn");
+        /* $$ = new_string("_Noreturn"); */
         $$ = new_string("_Noreturn ");
     }
     ;
@@ -1766,8 +1767,10 @@ preprocessor_control_line:
         /* Newline is added on the string */
     }
     | IMPORT STRING {
+        string *import_value;
+        
         $2 = remove_linefeed($2);
-        string *import_value = string_dup($2);
+        import_value = string_dup($2);
 
         /* Remove quotations */
         string_skip(import_value, 1);
@@ -1777,13 +1780,15 @@ preprocessor_control_line:
         hashmap_add(typedef_names, string_get(string_dup(import_value)), (void*)true);
         hashmap_add(object_names, string_get(string_dup(import_value)), (void*)true);
 
-        // /* Compile top bottom all imported objects */
-        // string *to_compile = string_dup(import_value);
-        // string_add_str(to_compile, ".zc");
-        // if(!(string_equals(to_compile, new_string("Object.zc")))) {
-        //     printf("compiling %s\n", string_get(to_compile));
-        //     compile_file(string_get(to_compile));
-        // }
+        /* Compile top bottom all imported objects */
+        /*
+        string *to_compile = string_dup(import_value);
+        string_add_str(to_compile, ".zc");
+        if(!(string_equals(to_compile, new_string("Object.zc")))) {
+            printf("compiling %s\n", string_get(to_compile));
+            compile_file(string_get(to_compile));
+        }
+        */
 
         /* Add a `.h` */
         string_add_str(import_value, ".h");
@@ -1844,5 +1849,5 @@ declaration_list:
 %%
 
 int main(int _argc, char **_argv) {
-    _main(_argc, _argv);
+    return _main(_argc, _argv);
 }

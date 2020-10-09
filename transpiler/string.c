@@ -37,9 +37,11 @@ string *new_string(char *initial_string) {
 }
 
 void string_add_str(string *sb, const char *str) {
+    size_t len;
+
     if(sb == NULL || str == NULL || *str == '\0') return;
 
-    size_t len = strlen(str);
+    len = strlen(str);
     string_ensure_space(sb, len);
 
     /* Copy the value into memory */
@@ -66,7 +68,9 @@ void string_add_int(string *sb, int val) {
 
     if(sb == NULL) return;
 
-    snprintf(str, sizeof(str), "%d", val);
+    /* snprintf(str, sizeof(str), "%d", val); */
+    /* TODO -> UNCHECKED BOUNDS */
+    sprintf(str, "%d", val);
     string_add_str(sb, str);
 }
 
@@ -76,7 +80,9 @@ void string_add_double_precision(string *sb, double val) {
     if(sb == NULL) return;
 
     /* Use %g for minimum precision on printing floats */
-    snprintf(str, sizeof(str), "%g", val);
+    /* snprintf(str, sizeof(str), "%g", val); */
+    /* TODO -> UNCHECKED BOUNDS */
+    sprintf(str, "%g", val);
     string_add_str(sb, str);
 }
 
@@ -132,9 +138,11 @@ unsigned char string_equals(string *sb, string *other) {
 }
 
 string *string_dup(string *sb) {
+    string *dup;
+
     if(sb == NULL) return NULL;
 
-    string *dup = new_string("");
+    dup = new_string("");
     string_add_str(dup, string_get(sb));
 
     return dup;
@@ -173,37 +181,45 @@ string *string_substring(string *str, size_t from, size_t __to) {
     return strdup;
 }
 
-void string_iterate(string *sb, stringlambda apply) {
+void string_iterate(string *sb, string_lambda apply) {
+    char *sb_str;
+    size_t i;
+
     /* TODO -> Convert check to asserts */
     if(sb == NULL || apply == NULL) return;
 
-    char *sb_str = string_get(sb);
+    sb_str = string_get(sb);
 
-    size_t i;
     for(i = 0; i < string_length(sb); i++)
         apply(sb_str[i]);
 }
 
-string *string_map(string *sb, stringlambda modifier) {
+string *string_map(string *sb, string_lambda modifier) {
+    char *sb_str;
+    string *sb_dup;
+    size_t i;
+    
     if(sb == NULL || modifier == NULL) return NULL;
 
-    char *sb_str = string_get(sb);
-    string *sb_dup = new_string("");
+    sb_str = string_get(sb);
+    sb_dup = new_string("");
 
-    size_t i;
     for(i = 0; i < string_length(sb); i++)
         string_add_char(sb_dup, modifier(sb_str[i]));
 
     return sb_dup;
 }
 
-string *string_filter(string *sb, stringlambda filter) {
+string *string_filter(string *sb, string_lambda filter) {
+    char *sb_str;
+    string *sb_dup;
+    size_t i;
+
     if(sb == NULL || filter == NULL) return NULL;
 
-    char *sb_str = string_get(sb);
-    string *sb_dup = new_string("");
+    sb_str = string_get(sb);
+    sb_dup = new_string("");
 
-    size_t i;
     for(i = 0; i < string_length(sb); i++)
         if(filter(sb_str[i]))
             string_add_char(sb_dup, sb_str[i]);
@@ -212,13 +228,15 @@ string *string_filter(string *sb, stringlambda filter) {
 }
 
 char *string_identifier(string *sb) {
-    if(sb == NULL) return NULL;
-
-    string *output = new_string("");
-
+    string *output;
     unsigned char add_underscore = 0;
     char buf[32];
     size_t i;
+    string *ret_value;
+
+    if(sb == NULL) return NULL;
+
+    output = new_string("");
 
     for(i = 0; i < string_length(sb); i++) {
         char c = string_get(sb)[i];
@@ -236,7 +254,6 @@ char *string_identifier(string *sb) {
         }
     }
 
-    string *ret_value;
     if(add_underscore)
         ret_value = new_string("_");
     else

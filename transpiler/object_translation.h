@@ -4,15 +4,24 @@
 #include "includes.h"
 
 static string *translate_object(string *name_of_object, string *parent_object, vector *object_parameter_list, vector *declaration_list) {
-    string *object_translation_unit = new_string("");
-    main_flag = false;
+    string *object_translation_unit;
+    vector *object_fields;
+    vector *object_messages;
+    size_t i;
+    int locally_defined_messages = 0;
+    string *inherited_class = new_string("");
+    bool constructor_is_overriden = false;
+    bool destructor_is_overriden = false;
+    string *method_on_new = new_string("");
+    string *method_on_defer = new_string("");
 
+    main_flag = false;
     filename = string_dup(name_of_object);
     string_add_str(filename, ".h");
 
     /************/
-    vector *object_fields = vector_get(declaration_list, 0);
-    vector *object_messages = vector_get(declaration_list, 1);
+    object_fields = vector_get(declaration_list, 0);
+    object_messages = vector_get(declaration_list, 1);
     /************/
 
     hashmap_add(typedef_names, string_get(string_dup(name_of_object)), (void*)true);
@@ -20,6 +29,7 @@ static string *translate_object(string *name_of_object, string *parent_object, v
     hashmap_add(object_list_for_main, string_get(string_dup(name_of_object)), (void*)true);
 
     /* Translate the parsed data */
+    object_translation_unit = new_string("");
     string_add_str(object_translation_unit, "\n#ifndef __");
     string_add_str(object_translation_unit, string_get(name_of_object));
     string_add_str(object_translation_unit, "_\n");
@@ -40,14 +50,15 @@ static string *translate_object(string *name_of_object, string *parent_object, v
 
     /* Create the include file */
     if(!string_equals(parent_object, new_string("Object"))) {
+        FILE *fp;
+
         string *filename = string_dup(parent_object);
         string_add_str(filename, ".h");
-        FILE *fp = fopen(string_get(filename), "w");
+        fp = fopen(string_get(filename), "w");
         fclose(fp);
         vector_add(files, filename);
     }
 
-    size_t i;
     for(i = 0; i < vector_length(object_fields); i++) {
         vector *field = vector_get(object_fields, i);
         string_add_str(object_translation_unit, "    ");
@@ -58,7 +69,6 @@ static string *translate_object(string *name_of_object, string *parent_object, v
     string_add_str(object_translation_unit, "};\n");
 
     /* Count locally defined messages */
-    int locally_defined_messages = 0;
     for(i = 0; i < vector_length(object_messages); i++) {
         vector *message = vector_get(object_messages, i);
 
@@ -75,7 +85,6 @@ static string *translate_object(string *name_of_object, string *parent_object, v
             locally_defined_messages++;
     }
 
-    string *inherited_class = new_string("");
     if(locally_defined_messages != 0) {
         string_add_str(object_translation_unit, "struct ");
         string_add_str(object_translation_unit, string_get(name_of_object));
@@ -102,12 +111,12 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 if(string_length(vector_get(message, 3)) == 0)
                     string_add_str(object_translation_unit, ")(void *self");
                 else {
-                    string_add_str(object_translation_unit, ")(void *self");
-                    vector *message_fields = vector_get(message, 3);
                     size_t j;
+                    vector *message_fields = vector_get(message, 3);
+                    string_add_str(object_translation_unit, ")(void *self");
                     for(j = 0; j < vector_length(message_fields); j++) {
-                        string_add_str(object_translation_unit, ", ");
                         vector *current_message_fields = vector_get(message_fields, j);
+                        string_add_str(object_translation_unit, ", ");
                         string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 0)));
                         string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 1)));
                     }
@@ -136,6 +145,10 @@ static string *translate_object(string *name_of_object, string *parent_object, v
             if(!string_equals(vector_get(message, 2), new_string("new"))
             && !string_equals(vector_get(message, 2), new_string("defer"))
             && !string_equals(vector_get(message, 1), new_string("super "))) {
+                string *name = vector_get(message, 2);
+                vector *message_fields = vector_get(message, 3);
+                size_t j;
+
                 /* Write base call */
                 string_add_str(object_translation_unit, string_get(vector_get(message, 0)));
 
@@ -146,12 +159,12 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 if(string_length(vector_get(message, 3)) == 0)
                     string_add_str(object_translation_unit, "(void *_self");
                 else {
-                    string_add_str(object_translation_unit, "(void *_self");
                     vector *message_fields = vector_get(message, 3);
                     size_t j;
+                    string_add_str(object_translation_unit, "(void *_self");
                     for(j = 0; j < vector_length(message_fields); j++) {
-                        string_add_str(object_translation_unit, ", ");
                         vector *current_message_fields = vector_get(message_fields, j);
+                        string_add_str(object_translation_unit, ", ");
                         string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 0)));
                         string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 1)));
                     }
@@ -165,24 +178,22 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 string_add_str(object_translation_unit, "Class *class = zircon_static_method_class_of(_self);\n\n");
                 string_add_str(object_translation_unit, "    assert(class->");
 
-                string *name = vector_get(message, 2);
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, ");\n");
-                // string_add_str(object_translation_unit, "zircon_static_method_cast(,)");
+                /* string_add_str(object_translation_unit, "zircon_static_method_cast(,)"); */
                 string_add_str(object_translation_unit, "    result = class->");
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, "(_self");
-                vector *message_fields = vector_get(message, 3);
-                size_t j;
+                
                 for(j = 0; j < vector_length(message_fields); j++) {
-                    string_add_str(object_translation_unit, ", ");
                     vector *current_message_fields = vector_get(message_fields, j);
+                    string_add_str(object_translation_unit, ", ");
                     string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 1)));
                 }
                 string_add_str(object_translation_unit, ");\n");
 
                 /********/
-                // if("result is not void")
+                /* if("result is not void") */
                     string_add_str(object_translation_unit, "    return result;\n");
                 /********/
                 string_add_str(object_translation_unit, "}\n");
@@ -198,12 +209,12 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 if(string_length(vector_get(message, 3)) == 0)
                     string_add_str(object_translation_unit, "(void *_class, void *_self");
                 else {
-                    string_add_str(object_translation_unit, "(void *_class, void *_self");
                     vector *message_fields = vector_get(message, 3);
                     size_t j;
+                    string_add_str(object_translation_unit, "(void *_class, void *_self");
                     for(j = 0; j < vector_length(message_fields); j++) {
-                        string_add_str(object_translation_unit, ", ");
                         vector *current_message_fields = vector_get(message_fields, j);
+                        string_add_str(object_translation_unit, ", ");
                         string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 0)));
                         string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 1)));
                     }
@@ -222,14 +233,14 @@ static string *translate_object(string *name_of_object, string *parent_object, v
                 string_add_str(object_translation_unit, string_get(name));
                 string_add_str(object_translation_unit, "(_self");
                 for(j = 0; j < vector_length(message_fields); j++) {
-                    string_add_str(object_translation_unit, ", ");
                     vector *current_message_fields = vector_get(message_fields, j);
+                    string_add_str(object_translation_unit, ", ");
                     string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 1)));
                 }
                 string_add_str(object_translation_unit, ");\n");
 
                 /********/
-                // if("result is not void")
+                /* if("result is not void") */
                     string_add_str(object_translation_unit, "    return result;\n");
                 /********/
                 string_add_str(object_translation_unit, "}\n");
@@ -238,10 +249,6 @@ static string *translate_object(string *name_of_object, string *parent_object, v
     }
 
     string_add_str(object_translation_unit, "\n/* METHODS */\n");
-    bool constructor_is_overriden = false;
-    bool destructor_is_overriden = false;
-    string *method_on_new;
-    string *method_on_defer;
     for(i = 0; i < vector_length(object_messages); i++) {
         vector *message = vector_get(object_messages, i);
         if(string_equals(vector_get(message, 2), new_string("new"))) {
@@ -255,6 +262,7 @@ static string *translate_object(string *name_of_object, string *parent_object, v
     }
 
     if(constructor_is_overriden) {
+        size_t k;
         string_add_str(object_translation_unit, "void *");
         string_add_str(object_translation_unit, string_get(name_of_object));
         string_add_str(object_translation_unit, "_ctor(void *_self, va_list *app) {\n");
@@ -265,7 +273,6 @@ static string *translate_object(string *name_of_object, string *parent_object, v
         string_add_str(object_translation_unit, ", _self, app);\n\n");
 
         /***********************************************/
-        size_t k;
         for(k = 0; k < vector_length(object_parameter_list); k++) {
             vector *current_parameter = vector_get(object_parameter_list, k);
             string_add_str(object_translation_unit, string_get(vector_get(current_parameter, 0)));
@@ -294,6 +301,9 @@ static string *translate_object(string *name_of_object, string *parent_object, v
 
     for(i = 0; i < vector_length(object_messages); i++) {
         vector *message = vector_get(object_messages, i);
+        vector *message_fields = vector_get(message, 3);
+        size_t j;
+
         if(string_equals(vector_get(message, 2), new_string("new"))
         || string_equals(vector_get(message, 2), new_string("defer")))
             continue;
@@ -305,14 +315,14 @@ static string *translate_object(string *name_of_object, string *parent_object, v
         if(string_length(vector_get(message, 3)) == 0)
             string_add_str(object_translation_unit, "(void *_self");
         else {
-            string_add_str(object_translation_unit, "(void *_self");
             vector *message_fields = vector_get(message, 3);
             size_t j;
+            string_add_str(object_translation_unit, "(void *_self");
             for(j = 0; j < vector_length(message_fields); j++) {
-                string_add_str(object_translation_unit, ", ");
                 vector *current_message_fields = vector_get(message_fields, j);
-                string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 0)));
                 void *is_message_an_object = vector_get(current_message_fields, 2);
+                string_add_str(object_translation_unit, ", ");
+                string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 0)));
                 if(is_message_an_object)
                     string_add_char(object_translation_unit, '_');
                 string_add_str(object_translation_unit, string_get(vector_get(current_message_fields, 1)));
@@ -329,8 +339,7 @@ static string *translate_object(string *name_of_object, string *parent_object, v
         string_add_str(object_translation_unit, " *super = (struct ");
         string_add_str(object_translation_unit, string_get(parent_object));
         string_add_str(object_translation_unit, "*)self;\n\n");
-        vector *message_fields = vector_get(message, 3);
-        size_t j;
+        
         for(j = 0; j < vector_length(message_fields); j++) {
             /* Check forobject parameter */
             vector *current_message_fields = vector_get(message_fields, j);

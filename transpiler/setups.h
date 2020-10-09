@@ -10,6 +10,7 @@ static void __setup_hashmaps(void) {
 }
 
 static void __setup_initial_object(void) {
+    FILE *fp;
     string *obj = new_string("");
     string_add_str(obj, "#ifndef __OBJECT_H_\n");
     string_add_str(obj, "#define __OBJECT_H_\n\n");
@@ -32,13 +33,15 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "typedef unsigned char bool;\n");
     string_add_str(obj, "#define true 1\n");
     string_add_str(obj, "#define false 0\n\n");
-    // string_add_str(obj, "typedef void (*Zircon_Method)();\n");
-    // string_add_str(obj, "struct Zircon_Method {\n");
-    // string_add_str(obj, "    char *tag;\n");
-    // string_add_str(obj, "    Zircon_Method selector;\n");
-    // string_add_str(obj, "    Zircon_Method method;\n");
-    // string_add_str(obj, "};\n");
-    // string_add_str(obj, "\n");
+    /*
+    string_add_str(obj, "typedef void (*Zircon_Method)();\n");
+    string_add_str(obj, "struct Zircon_Method {\n");
+    string_add_str(obj, "    char *tag;\n");
+    string_add_str(obj, "    Zircon_Method selector;\n");
+    string_add_str(obj, "    Zircon_Method method;\n");
+    string_add_str(obj, "};\n");
+    string_add_str(obj, "\n");
+    */
     string_add_str(obj, "struct Object {\n");
     string_add_str(obj, "    unsigned long magic;\n");
     string_add_str(obj, "    struct Class *class;\n");
@@ -132,19 +135,21 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    signal(SIGSEGV, sigsegv_descriptor);\n");
     string_add_str(obj, "    return (void*)self;\n");
     string_add_str(obj, "}\n");
-    // string_add_str(obj, "\n");
-    // string_add_str(obj, "Zircon_Method zircon_static_method_responds_to(void *_self, char *tag) {\n");
-    // string_add_str(obj, "    if(tag && *tag) {\n");
-    // string_add_str(obj, "        struct Class *class = zircon_static_method_class_of(_self);\n");
-    // string_add_str(obj, "        struct Zircon_Method *p = &class->ctor;\n");
-    // string_add_str(obj, "        int nmeth = (zircon_static_method_size_of(class) - offsetof(struct Class, ctor)) / sizeof(struct Zircon_Method);\n");
-    // string_add_str(obj, "        do {\n");
-    // string_add_str(obj, "            if(p->tag && strcmp(p->tag, tag) == 0)\n");
-    // string_add_str(obj, "                return p->method ? p->selector : 0;\n");
-    // string_add_str(obj, "        } while(++p, --nmeth);\n");
-    // string_add_str(obj, "    }\n");
-    // string_add_str(obj, "    return 0;\n");
-    // string_add_str(obj, "}\n");
+    /*
+    string_add_str(obj, "\n");
+    string_add_str(obj, "Zircon_Method zircon_static_method_responds_to(void *_self, char *tag) {\n");
+    string_add_str(obj, "    if(tag && *tag) {\n");
+    string_add_str(obj, "        struct Class *class = zircon_static_method_class_of(_self);\n");
+    string_add_str(obj, "        struct Zircon_Method *p = &class->ctor;\n");
+    string_add_str(obj, "        int nmeth = (zircon_static_method_size_of(class) - offsetof(struct Class, ctor)) / sizeof(struct Zircon_Method);\n");
+    string_add_str(obj, "        do {\n");
+    string_add_str(obj, "            if(p->tag && strcmp(p->tag, tag) == 0)\n");
+    string_add_str(obj, "                return p->method ? p->selector : 0;\n");
+    string_add_str(obj, "        } while(++p, --nmeth);\n");
+    string_add_str(obj, "    }\n");
+    string_add_str(obj, "    return 0;\n");
+    string_add_str(obj, "}\n");
+    */
 
     string_add_str(obj, "\n");
     string_add_str(obj, "void *zircon_ctor(void *_self, va_list *app) {\n");
@@ -394,13 +399,15 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    \"Object\",\n");
     string_add_str(obj, "    &_Object,\n");
     string_add_str(obj, "    sizeof(struct Object),\n");
-    // string_add_str(obj, "    { \"\", (Zircon_Method)0, (Zircon_Method)Object_ctor },\n");
-    // string_add_str(obj, "    { \"\", (Zircon_Method)0, (Zircon_Method)Object_dtor },\n");
-    // string_add_str(obj, "    { \"differ\", (Zircon_Method)differ, (Zircon_Method)Object_differ },\n");
-    // string_add_str(obj, "    { \"puto\", (Zircon_Method)puto, (Zircon_Method)Object_puto },\n");
-    // string_add_str(obj, "    { \"class\", (Zircon_Method)class, (Zircon_Method)Object_class },\n");
-    // string_add_str(obj, "    { \"superclass\", (Zircon_Method)superclass, (Zircon_Method)Object_superclass },\n");
-    // string_add_str(obj, "    { \"to_string\", (Zircon_Method)to_string, (Zircon_Method)Object_to_string }\n");
+    /*
+    string_add_str(obj, "    { \"\", (Zircon_Method)0, (Zircon_Method)Object_ctor },\n");
+    string_add_str(obj, "    { \"\", (Zircon_Method)0, (Zircon_Method)Object_dtor },\n");
+    string_add_str(obj, "    { \"differ\", (Zircon_Method)differ, (Zircon_Method)Object_differ },\n");
+    string_add_str(obj, "    { \"puto\", (Zircon_Method)puto, (Zircon_Method)Object_puto },\n");
+    string_add_str(obj, "    { \"class\", (Zircon_Method)class, (Zircon_Method)Object_class },\n");
+    string_add_str(obj, "    { \"superclass\", (Zircon_Method)superclass, (Zircon_Method)Object_superclass },\n");
+    string_add_str(obj, "    { \"to_string\", (Zircon_Method)to_string, (Zircon_Method)Object_to_string }\n");
+    */
     string_add_str(obj, "    Object_ctor,\n");
     string_add_str(obj, "    Object_dtor,\n");
     string_add_str(obj, "    Object_differ,\n");
@@ -415,13 +422,15 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "    \"Class\",\n");
     string_add_str(obj, "    &_Object,\n");
     string_add_str(obj, "    sizeof(struct Class),\n");
-    // string_add_str(obj, "    { \"\", (Zircon_Method)0, (Zircon_Method)Class_ctor },\n");
-    // string_add_str(obj, "    { \"\", (Zircon_Method)0, (Zircon_Method)Class_dtor },\n");
-    // string_add_str(obj, "    { \"differ\", (Zircon_Method)differ, (Zircon_Method)Object_differ },\n");
-    // string_add_str(obj, "    { \"puto\", (Zircon_Method)puto, (Zircon_Method)Object_puto },\n");
-    // string_add_str(obj, "    { \"class\", (Zircon_Method)class, (Zircon_Method)Object_class },\n");
-    // string_add_str(obj, "    { \"superclass\", (Zircon_Method)superclass, (Zircon_Method)Object_superclass },\n");
-    // string_add_str(obj, "    { \"to_string\", (Zircon_Method)to_string, (Zircon_Method)Object_to_string }\n");
+    /*
+    string_add_str(obj, "    { \"\", (Zircon_Method)0, (Zircon_Method)Class_ctor },\n");
+    string_add_str(obj, "    { \"\", (Zircon_Method)0, (Zircon_Method)Class_dtor },\n");
+    string_add_str(obj, "    { \"differ\", (Zircon_Method)differ, (Zircon_Method)Object_differ },\n");
+    string_add_str(obj, "    { \"puto\", (Zircon_Method)puto, (Zircon_Method)Object_puto },\n");
+    string_add_str(obj, "    { \"class\", (Zircon_Method)class, (Zircon_Method)Object_class },\n");
+    string_add_str(obj, "    { \"superclass\", (Zircon_Method)superclass, (Zircon_Method)Object_superclass },\n");
+    string_add_str(obj, "    { \"to_string\", (Zircon_Method)to_string, (Zircon_Method)Object_to_string }\n");
+    */
     string_add_str(obj, "    Class_ctor,\n");
     string_add_str(obj, "    Class_dtor,\n");
     string_add_str(obj, "    Object_differ,\n");
@@ -437,7 +446,7 @@ static void __setup_initial_object(void) {
     string_add_str(obj, "#endif\n");
 
     /*********************************/
-    FILE *fp = fopen("Object.h", "w");
+    fp = fopen("Object.h", "w");
     fprintf(fp, "%s", string_get(obj));
     fclose(fp);
     /*********************************/
@@ -450,10 +459,12 @@ static void *write_init_calls(void *o) {
     string_add_str(init_calls, "    __init_");
     string_add_str(init_calls, o);
     string_add_str(init_calls, "();\n");
+
+    return o;
 }
 static void __setup_init_objects(void) {
     string_add_str(init_calls, "void __setup_objects(void) {\n");
-    hashmap_map(object_list_for_main, (lambda)write_init_calls, KEYS);
+    hashmap_map(object_list_for_main, (hashmap_lambda)write_init_calls, KEYS);
     string_add_str(init_calls, "}\n");
 }
 

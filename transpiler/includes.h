@@ -17,6 +17,9 @@ int yylex(void);
 int yyparse(void);
 void yyerror(char*);
 
+/* External definitions */
+static void *delete_file(string *filename);
+
 /* Result of the parsed file */
 string *translation;
 string *init_calls;

@@ -1,10 +1,10 @@
 CC = gcc
 OPT = -march=native -O2
-# VERSION = -std=c89
+VERSION = -std=c89
 OUTPUT = zircon
 
 FLAGS = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wpedantic -Wmissing-prototypes -Wstrict-prototypes
-WARNINGS = -Wno-maybe-uninitialized -Wno-unused-function -Wno-return-type
+WARNINGS = -Wno-unused-function
 #YACC_WARNINGS = -Wcounterexamples
 HEADERS =
 LIBS =

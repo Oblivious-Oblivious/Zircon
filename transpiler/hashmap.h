@@ -6,7 +6,7 @@
 #include <string.h> /* strlen, strcmp */
 
 /**
- * @func: lambda
+ * @func: hashmap_lambda
  * @desc: A generic function type used upon iterable data structures
  * @param -> An element belonging to an iterable
  * @return -> A value that satisfies the callee's purpose (map, filter, reduce)
@@ -15,9 +15,9 @@
 /* Since this is completely generic we can't check for validity of arguments */
 /* The validity of the function is dependent on the callee */
 
-// typedef void* (*lambda)();
-typedef void* (*lambda)(void*);
-typedef void* (*lambda2)(void*, void*);
+/* typedef void* (*hashmap_lambda)(); */
+typedef void* (*hashmap_lambda)(void*);
+typedef void* (*hashmap_lambda2)(void*, void*);
 
 /* Initial capacity of the hashmap */
 static const size_t hashmap_init_capacity = 32;
@@ -64,7 +64,7 @@ void hashmap_add(hashmap *map, char *key, void *value);
 static unsigned long crc32(const unsigned char *s, unsigned int len);
 static unsigned int hashmap_hash_int(hashmap *map, char *keystring);
 static size_t hashmap_hash(hashmap *map, char *key);
-// static void hashmap_rehash(hashmap *map);
+/* static void hashmap_rehash(hashmap *map); */
 hashmap *new_hashmap(void);
 void hashmap_add(hashmap *map, char *key, void *value);
 void hashmap_set(hashmap *map, char *key, void *value);
@@ -72,8 +72,8 @@ void *hashmap_get(hashmap *map, char *key);
 void hashmap_delete(hashmap *map, char *key);
 size_t hashmap_length(hashmap *map);
 hashmap *hashmap_dup(hashmap *map);
-hashmap *hashmap_map(hashmap *map, lambda modifier, hashmap_element_type element_type);
-hashmap *hashmap_filter(hashmap *map, lambda filter, hashmap_element_type element_type);
-void *hashmap_reduce(hashmap *map, lambda2 fold, hashmap_element_type element_type);
+hashmap *hashmap_map(hashmap *map, hashmap_lambda modifier, hashmap_element_type element_type);
+hashmap *hashmap_filter(hashmap *map, hashmap_lambda filter, hashmap_element_type element_type);
+void *hashmap_reduce(hashmap *map, hashmap_lambda2 fold, hashmap_element_type element_type);
 
 #endif

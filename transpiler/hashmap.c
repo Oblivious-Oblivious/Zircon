@@ -106,12 +106,14 @@ static unsigned int hashmap_hash_int(hashmap *map, char *keystring) {
  * @return The location
  **/
 static size_t hashmap_hash(hashmap *map, char *key) {
+	size_t curr;
+    size_t i;
+
 	if(map->length >= (map->alloced / 2)) return -1;
 
-	size_t curr = hashmap_hash_int(map, key);
+    curr = hashmap_hash_int(map, key);
 
 	/* Linear probing */
-    size_t i = 0;
 	for(i = 0; i < max_chain_length; i++) {
 		if(map->data[curr].in_use == 0) return curr;
 		
@@ -133,18 +135,19 @@ static size_t hashmap_hash(hashmap *map, char *key) {
  **/
 static void hashmap_rehash(hashmap *map) {
     hashmap_element *temp = (hashmap_element*)calloc(2 * map->alloced, sizeof(hashmap_element));
+    size_t i;
+    size_t old_size;
 
 	/* Update the array */
 	hashmap_element *curr = map->data;
 	map->data = temp;
 
 	/* Update the size */
-	size_t old_size = map->alloced;
+	old_size = map->alloced;
 	map->alloced = 2 * map->alloced;
 	map->length = 0;
 
     /* Rehash all the elements */
-    size_t i = 0;
 	for(i = 0; i < old_size; i++) {
         /* Skip deleted elements */
         if(curr[i].in_use == 0) continue;
@@ -162,9 +165,11 @@ hashmap *new_hashmap(void) {
 }
 
 void hashmap_add(hashmap *map, char *key, void *value) {
+    signed long index;
+
     if(map == NULL || key == NULL) return;
 
-    signed long long index = hashmap_hash(map, key);
+    index = hashmap_hash(map, key);
     
     /* In case of a full hashmap */
 	while(index == -1) {
@@ -180,12 +185,14 @@ void hashmap_add(hashmap *map, char *key, void *value) {
 }
 
 void hashmap_set(hashmap *map, char *key, void *value) {
+    size_t curr;
+    size_t i;
+
     if(map == NULL || key == NULL) return;
 
-	size_t curr = hashmap_hash_int(map, key);
+	curr = hashmap_hash_int(map, key);
 
 	/* Linear probing */
-    size_t i = 0;
 	for(i = 0; i < max_chain_length; i++) {
         if(map->data[curr].in_use == 1) {
             if(strcmp(map->data[curr].key, key) == 0) {
@@ -199,12 +206,14 @@ void hashmap_set(hashmap *map, char *key, void *value) {
 }
 
 void *hashmap_get(hashmap *map, char *key) {
+    size_t curr;
+    size_t i;
+
     if(map == NULL || key == NULL) return NULL;
 
-	size_t curr = hashmap_hash_int(map, key);
+	curr = hashmap_hash_int(map, key);
 
 	/* Linear probing  */
-    size_t i = 0;
 	for(i = 0; i < max_chain_length; i++) {
         if(map->data[curr].in_use == 1) {
             if(strcmp(map->data[curr].key, key) == 0) {
@@ -218,12 +227,14 @@ void *hashmap_get(hashmap *map, char *key) {
 }
 
 void hashmap_delete(hashmap *map, char *key) {
+    size_t curr;
+    size_t i;
+
     if(map == NULL || key == NULL) return;
 
-	size_t curr = hashmap_hash_int(map, key);
+	curr = hashmap_hash_int(map, key);
 
 	/* Linear probing */
-    size_t i = 0;
 	for(i = 0; i < max_chain_length; i++) {
         if(map->data[curr].in_use == 1) {
             if(strcmp(map->data[curr].key, key) == 0) {
@@ -249,12 +260,14 @@ size_t hashmap_length(hashmap *map) {
 }
 
 hashmap *hashmap_dup(hashmap *map) {
+    hashmap *dup;
+    size_t i;
+
     if(map == NULL) return NULL;
 
-    hashmap *dup = new_hashmap();
+    dup = new_hashmap();
     
     /* Iteratively copy all hashmap elements from one pointer to another */
-    size_t i = 0;
     for(i = 0; i < map->alloced; i++)
         if(map->data[i].in_use != 0)
             hashmap_add(dup, map->data[i].key, map->data[i].data);
@@ -262,13 +275,15 @@ hashmap *hashmap_dup(hashmap *map) {
     return dup;
 }
 
-hashmap *hashmap_map(hashmap *map, lambda modifier, hashmap_element_type element_type) {
+hashmap *hashmap_map(hashmap *map, hashmap_lambda modifier, hashmap_element_type element_type) {
+    hashmap *dup;
+    size_t i;
+
     if(map == NULL || modifier == NULL) return NULL;
 
-    hashmap *dup = hashmap_dup(map);
+    dup = hashmap_dup(map);
     
     /* Iterate with linear probing */
-    size_t i;
     for(i = 0; i < map->alloced; i++) {
         if(map->data[i].in_use != 0) {
             switch(element_type) {
@@ -288,13 +303,15 @@ hashmap *hashmap_map(hashmap *map, lambda modifier, hashmap_element_type element
     return dup;
 }
 
-hashmap *hashmap_filter(hashmap *map, lambda filter, hashmap_element_type element_type) {
+hashmap *hashmap_filter(hashmap *map, hashmap_lambda filter, hashmap_element_type element_type) {
+    hashmap *dup;
+    size_t i;
+
     if(map == NULL || filter == NULL) return NULL;
 
-    hashmap *dup = hashmap_dup(map);
+    dup = hashmap_dup(map);
 
     /* Iterate with linear probing */
-    size_t i;
     for(i = 0; i < map->alloced; i++) {
         if(map->data[i].in_use != 0) {
             switch(element_type) {
@@ -321,15 +338,15 @@ hashmap *hashmap_filter(hashmap *map, lambda filter, hashmap_element_type elemen
     return dup;
 }
 
-void *hashmap_reduce(hashmap *map, lambda2 fold, hashmap_element_type element_type) {
-    if(map == NULL || fold == NULL) return NULL;
-
-    void *accumulator;
+void *hashmap_reduce(hashmap *map, hashmap_lambda2 fold, hashmap_element_type element_type) {
+    void *accumulator = 0;
     void *current;
     int skip_first = 1;
+    size_t i;
+
+    if(map == NULL || fold == NULL) return NULL;
 
     /* In general this takes constant time no matter the hashmap size */
-    size_t i;
     for(i = 0; i < map->alloced; i++) {
         if(map->data[i].in_use != 0) {
             switch(element_type) {

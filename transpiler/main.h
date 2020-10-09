@@ -54,15 +54,17 @@ static int _main(int _argc, char **_argv) {
     if(!do_not_compile && main_flag_was_set && string_equals(mode, new_string("build"))) {
         /* printf("\033[38;5;206mExecuting: `%s`\033[0m\n", string_get(command)); */
         system(string_get(command));
-        vector_map(files, (lambda)delete_file);
+        vector_map(files, (vector_lambda)delete_file);
     }
     else if(!do_not_compile && main_flag_was_set && string_equals(mode, new_string("run"))) {
         string_add_str(command, " && ./a.out && rm a.out");
         /* printf("\033[38;5;206mExecuting: `%s && ./a.out && rm a.out`\033[0m\n", string_get(command)); */
         system(string_get(command));
-        vector_map(files, (lambda)delete_file);
+        vector_map(files, (vector_lambda)delete_file);
     }
     /*********************************/
+
+    return 0;
 }
 
 #endif
