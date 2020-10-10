@@ -47,8 +47,8 @@
 %type<String> parameter_list parameter_declaration identifier_list type_name abstract_declarator direct_abstract_declarator initializer
 %type<String> initializer_list designation designator_list designator statement labeled_statement compound_statement
 %type<String> block_item_list block_item expression_statement selection_statement iteration_statement jump_statement translation_unit
-%type<String> external_declaration function_definition declaration_list
-%type<String> static_assert_declaration atomic_type_specifier alignment_specifier
+%type<String> external_declaration function_definition declaration_list non_if_statement switch_statement
+%type<String> static_assert_declaration atomic_type_specifier alignment_specifier open_statement closed_statement
 
 %type<String> object object_specifier self_or_super declaration_specifiers_or_pointer
 %type<Vector> constructor_declaration destructor_declaration message_declaration_list message_declaration model_declaration_list
@@ -1544,6 +1544,15 @@ static_assert_declaration:
     ;
 
 statement:
+      open_statement {
+        $$ = string_dup($1);
+    }
+    | closed_statement {
+        $$ = string_dup($1);
+    }
+    ;
+
+non_if_statement:
       labeled_statement {
         $$ = string_dup($1);
     }
@@ -1625,7 +1634,19 @@ expression_statement:
     ;
 
 selection_statement:
-      IF '(' expression ')' statement ELSE statement {
+      switch_statement {
+        $$ = string_dup($1);
+    }
+    ;
+
+open_statement:
+      IF '(' expression ')' statement {
+        $$ = new_string("if(");
+        string_add_str($$, string_get($3));
+        string_add_str($$, ") ");
+        string_add_str($$, string_get($5));
+    }
+    | IF '(' expression ')' closed_statement ELSE open_statement {
         $$ = new_string("if(");
         string_add_str($$, string_get($3));
         string_add_str($$, ") ");
@@ -1633,13 +1654,24 @@ selection_statement:
         string_add_str($$, " else ");
         string_add_str($$, string_get($7));
     }
-    | IF '(' expression ')' statement {
+    ;
+
+closed_statement:
+      non_if_statement {
+        $$ = string_dup($1);
+    }
+    | IF '(' expression ')' closed_statement ELSE closed_statement {
         $$ = new_string("if(");
         string_add_str($$, string_get($3));
         string_add_str($$, ") ");
         string_add_str($$, string_get($5));
+        string_add_str($$, " else ");
+        string_add_str($$, string_get($7));
     }
-    | SWITCH '(' expression ')' statement {
+    ;
+
+switch_statement:
+      SWITCH '(' expression ')' statement {
         $$ = new_string("switch(");
         string_add_str($$, string_get($3));
         string_add_str($$, ") ");
