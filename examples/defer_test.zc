@@ -72,5 +72,4 @@ int main(void) {
 
     printf("Allocating without defer\n");
     defer_test(false);
-    printf("\n");
 }
