@@ -1,4 +1,4 @@
-CC = gcc
+CC = clang
 OPT = -march=native -O2
 VERSION = -std=c89
 OUTPUT = zircon
@@ -24,7 +24,7 @@ bison:
 	bison -d $(YACC_WARNINGS) $(YACC)
 
 compiler: flex bison
-	$(CC) $(OPT) $(VERSION) $(HEADERS) $(WARNINGS) $(FLAGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
+	$(CC) $(OPT) $(VERSION) $(HEADERS) $(FLAGS) $(WARNINGS) $(LIBS) -o $(OUTPUT) $(COMPILE)
 	cp $(OUTPUT) ../examples/
 
 clean:
