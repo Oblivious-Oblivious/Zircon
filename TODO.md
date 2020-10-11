@@ -9,7 +9,7 @@
     🟩 Rewrite cDataLib using Zircon.
 
 ## (✗) ver. 0.3.0 proposals
-    🟥 Add a compiler setup file to include predefined names and preprocessor directives.
+    🟩 Add a compiler setup file to include predefined names and preprocessor directives.
     🟥 Fix selectors on different classes with same names (fix namespacing).
     🟥 Bypass the C preprocessor and write a custom one, that includes extending to messages and objects.
     🟩 Extend the object model allowing for more reflection.

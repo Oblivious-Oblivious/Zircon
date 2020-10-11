@@ -38,15 +38,31 @@ static void *delete_file(string *filename) {
     return filename;
 }
 
+void *print_strings(void *item);
+
+void *print_strings(void *item) {
+    printf("type: `%s`\n", string_get(item));
+    return item;
+}
+static void read_environment(void) {
+    FILE *fp;
+    char *env = malloc(sizeof(char) * 1024);
+
+    /* TODO -> SECURITY ERROR, CAN OVERFLOW INPUT */
+    fp = fopen("env.zdb", "r");
+    if(fp != NULL)
+        while(fgets(env, 1024, fp))
+            hashmap_add(typedef_names, string_get(remove_linefeed(new_string(env))), (void*)true);
+
+    fclose(fp);
+}
+
 static void compile_file(void) {
     int i;
     for(i = total_i_values; i < argc; i++) {
         __setup_hashmaps();
         /**/
-        hashmap_add(typedef_names, "size_t", (void*)true);
-        hashmap_add(typedef_names, "bool", (void*)true);
-        hashmap_add(typedef_names, "lambda", (void*)true);
-        hashmap_add(typedef_names, "hashmap_element_type", (void*)true);
+        read_environment();
         /**/
         
         /* printf("\033[38;5;206mCompiling: `%s`\033[0m\n", argv[i]); */
