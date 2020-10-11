@@ -14,7 +14,7 @@
     🟥 Fix selectors on different classes with same names (fix namespacing).
     🟥 Add a compiler setup file to include predefined names and preprocessor directives.
     🟥 Bypass the C preprocessor and write a custom one, that includes extending to messages and objects.
-    🟥 Extend the object model allowing for more reflection.
+    🟩 Extend the object model allowing for more reflection.
     🟥 Fix nested message calls that now require parentheses.
     🟥 Generalize test suite and test files (write a simplified version of cSpec).
     🟥 Create a website to host code, where objects can be forked.
