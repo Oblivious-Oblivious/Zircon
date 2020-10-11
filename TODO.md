@@ -9,10 +9,8 @@
     🟩 Rewrite cDataLib using Zircon.
 
 ## (✗) ver. 0.3.0 proposals
-    🟥 Fix typedef names with identifiers.
-    🟥 Fix preprocessor with typedefs.
-    🟥 Fix selectors on different classes with same names (fix namespacing).
     🟥 Add a compiler setup file to include predefined names and preprocessor directives.
+    🟥 Fix selectors on different classes with same names (fix namespacing).
     🟥 Bypass the C preprocessor and write a custom one, that includes extending to messages and objects.
     🟩 Extend the object model allowing for more reflection.
     🟥 Fix nested message calls that now require parentheses.
@@ -38,6 +36,8 @@
     🟥 Rewrite cSpec using Zircon.
 
 ## (✗) ver. 0.5.0 proposals
+    🟥 Fix typedef problem.
+    🟥 Fix preprocessor with typedefs.
     🟥 When compiling two files without a main function, only the first gets translated properly (fix).
     🟥 Fix selectors returning void, by choosing at compile time whether to return or not.
     🟥 Add the callback method code for Object
