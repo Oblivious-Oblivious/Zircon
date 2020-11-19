@@ -26,6 +26,7 @@
     🟥 Add implicit, explicit calls to bypass compiler optimizations.
     🟥 Try avoid nullity checks, and implement specific action when an object turns out to be NULL.
     🟥 Try implementing automatic defer calls when out of block range (keep for implicit declarations).
+    🟥 Find unique definitions of `Object` and make it a zircon class to translate.
     🟥 Fix spaces on text generation (implement a rudimentary form of a self hosting compiler).
     🟥 Declutter compilation steps.
     🟩 Fix `__init_Object()` declarations with independent compilation.
@@ -55,4 +56,5 @@
     🟥 Add an optimizing compiler.
     🟥 Add the ability for implementing custom preprocessor layers dynamically.
     🟥 Add GCC extensions grammar and (maybe) use the C preprocessor before Zircon.
+    🟥 Run all code in parallel unless specifically told not to.
     🟥 Implement the idea of parallel object execution and communication with events and messages.
