@@ -1,5 +1,5 @@
 CC = clang
-OPT = -march=native -O2
+OPT = -O2
 VERSION = -std=c89
 OUTPUT = zircon
 
